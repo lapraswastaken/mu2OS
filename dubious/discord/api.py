@@ -136,7 +136,7 @@ class Interaction(Disc):
     # Type of interaction                                                                           
     type: InteractionType
     # Interaction data payload                                                                      
-    data: ApplicationCommandData | MessageComponentData | ModalSubmitData | None = field(kw_only=True, default=None)
+    data: InteractionData | None = field(kw_only=True, default=None)
     # Guild that the interaction was sent from                                                      
     guild_id: Snowflake | None = field(kw_only=True, default=None)
     # Channel that the interaction was sent from                                                    
@@ -196,7 +196,7 @@ class ModalSubmitData(Disc):
     # the ``custom_id`` of the modal
     custom_id: str
     # the values submitted by the user                                               
-    components: list[ActionRow | Button | SelectMenu | TextInput]
+    components: list[MessageComponent]
 
 @dataclass
 class ResolvedData(Disc):
@@ -244,7 +244,7 @@ class InteractionResponse(Disc):
     # the type of response        
     type: InteractionCallbackType
     # an optional response message
-    data: ApplicationCommandData | MessageComponentData | ModalSubmitData | None = field(kw_only=True, default=None)
+    data: InteractionCallbackData | None = field(kw_only=True, default=None)
 
 class InteractionCallbackType(int, Enum):
     # ACK a `Ping`
@@ -275,7 +275,7 @@ class InteractionCallbackMessages(Disc):
     # `message flags`
     flags: int | None = field(kw_only=True, default=None)
     # message components                                                                                                                                                                         
-    components: list[ActionRow | Button | SelectMenu | TextInput] | None = field(kw_only=True, default=None)
+    components: list[MessageComponent] | None = field(kw_only=True, default=None)
     # attachment objects with filename and description                                                                                                                                           
     attachments: list[Attachment] | None = field(kw_only=True, default=None)
 
@@ -291,7 +291,7 @@ class InteractionCallbackModal(Disc):
     # the title of the popup modal, max 45 characters                     
     title: str
     # between 1 and 5 (inclusive) components that make up the modal       
-    components: list[ActionRow | Button | SelectMenu | TextInput]
+    components: list[MessageComponent]
 
 class ComponentType(int, Enum):
     # A container for other components
@@ -306,14 +306,14 @@ class ComponentType(int, Enum):
 @dataclass
 class ActionRow(Disc):
     # `1` for an action row     
-    type: int
+    type: int = field(kw_only=True, default=1)
     # the components on this row
-    components: list[ActionRow | Button | SelectMenu | TextInput]
+    components: list[MessageComponent]
 
 @dataclass
 class Button(Disc):
     # `2` for a button                                                                         
-    type: int
+    type: int = field(kw_only=True, default=2)
     # one of `button styles`
     style: int
     # text that appears on the button, max 80 characters                                       
@@ -342,7 +342,7 @@ class ButtonStyle(int, Enum):
 @dataclass
 class SelectMenu(Disc):
     # `3` for a select menu                                                    
-    type: int
+    type: int = field(kw_only=True, default=3)
     # a developer-defined identifier for the select menu, max 100 characters   
     custom_id: str
     # the choices in the select, max 25                                        
@@ -372,7 +372,7 @@ class SelectOption(Disc):
 @dataclass
 class TextInput(Disc):
     # `4` for a text input                                                                       
-    type: int
+    type: int = field(kw_only=True, default=4)
     # a developer-defined identifier for the input, max 100 characters                           
     custom_id: str
     # the `Text Input Style`
@@ -642,7 +642,7 @@ class Message(Disc):
     # the thread that was started from this message, includes `thread member` object                                                                                                                                            
     thread: Channel | None = field(kw_only=True, default=None)
     # sent if the message contains components like buttons, action rows, or other interactive components                                                                                                                                                                      
-    components: list[ActionRow | Button | SelectMenu | TextInput] | None = field(kw_only=True, default=None)
+    components: list[MessageComponent] | None = field(kw_only=True, default=None)
     # sent if the message contains stickers                                                                                                                                                                                                                                   
     sticker_items: list[StickerItem] | None = field(kw_only=True, default=None)
     # **Deprecated** the stickers sent with the message                                                                                                                                                                                                                       
@@ -953,7 +953,7 @@ class ForumThreadMessageParams(Disc):
     # Allowed mentions for the message                                                                                                                                           
     allowed_mentions: AllowedMentions | None = field(kw_only=True, default=None)
     # Components to include with the message                                                                                                                                     
-    components: list[ActionRow | Button | SelectMenu | TextInput] | None = field(kw_only=True, default=None)
+    components: list[MessageComponent] | None = field(kw_only=True, default=None)
     # IDs of up to 3 `stickers` in the server to send in the message                                                                     
     sticker_ids: list[Snowflake] | None = field(kw_only=True, default=None)
     # JSON-encoded body of non-file params, only for `multipart/form-data` requests. See `Uploading Files`                                      
@@ -2141,3 +2141,7 @@ class MembershipStateType(int, Enum):
     INVITED = 1
     ACCEPTED = 2
 
+
+InteractionData = ApplicationCommandData | MessageComponentData | ModalSubmitData
+InteractionCallbackData = InteractionCallbackMessages | InteractionCallbackAutocomplete | InteractionCallbackModal
+MessageComponent = ActionRow | Button | SelectMenu | TextInput

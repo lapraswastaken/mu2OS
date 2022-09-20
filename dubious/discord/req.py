@@ -808,7 +808,7 @@ class EditMessage(HttpReq[Message]):
         # Allowed mentions for the message                                                                                                       
         allowed_mentions: AllowedMentions
         # Components to include with the message                                                                                                 
-        components: list[ActionRow | Button | SelectMenu | TextInput]
+        components: list[MessageComponent]
         # JSON-encoded body of non-file params (multipart/form-data only). See `Uploading Files`                
         payload_json: str
         # Attached files to keep and possible descriptions for new files. See `Uploading Files`                 
@@ -1731,7 +1731,7 @@ class ExecuteWebhook(HttpReq[None]):
         # allowed mentions for the message                                                                                                                                           
         allowed_mentions: AllowedMentions
         # the components to include with the message                                                                                                                                 
-        components: list[ActionRow | Button | SelectMenu | TextInput]
+        components: list[MessageComponent]
         # JSON encoded body of non-file params                                                                                                                                       
         payload_json: str
         # attachment objects with filename and description                                                                                                                           
@@ -1836,7 +1836,7 @@ class EditWebhookMessage(HttpReq[Message]):
         # allowed mentions for the message                               
         allowed_mentions: AllowedMentions
         # the components to include with the message                     
-        components: list[ActionRow | Button | SelectMenu | TextInput]
+        components: list[MessageComponent]
         # JSON encoded body of non-file params (multipart/form-data only)
         payload_json: str
         # attached files to keep and possible descriptions for new files 

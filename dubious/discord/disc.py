@@ -3,14 +3,19 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 
 import dataclasses as dc
+import math
+from pprint import pprint
 import re
 from time import sleep
+import time
+import traceback
 from types import UnionType
 from typing import Any, Generic, TypeVar, ClassVar, get_args, get_origin, get_type_hints
 from enum import Enum
 from typing_extensions import TypeVarTuple
 
 from requests import request
+import requests
 
 class Snowflake(str):
     def __init__(self, r: str|int):
@@ -67,12 +72,28 @@ def cast(t_to: type[t_Cast], raw: Any) -> t_Cast:
                 t for t in get_args(t_to)
                     if t != type(None)
             ]
+            best_score = 0
+            best_len = math.inf
+            best_opt = None
             for t_opt in t_optionals:
-                try:
-                    return cast(t_opt, raw)
-                except ValueError:
-                    continue
-            raise ValueError()
+                if dc.is_dataclass(t_opt):
+                    fields = [field.name for field in dc.fields(t_opt)]
+                    score = sum(name in fields for name in raw)
+                    if (
+                        score > best_score or (
+                            score == best_score and 
+                            len(fields) < best_len
+                        )
+                    ):
+                        best_score = score
+                        best_len = len(fields)
+                        best_opt = t_opt
+                else:
+                    try:
+                        return cast(t_opt, raw)
+                    except ValueError:
+                        continue
+            return cast(best_opt, raw) #type: ignore
 
     if issubclass(t_to, Disc):
         fixedraw = {}
@@ -87,14 +108,42 @@ def cast(t_to: type[t_Cast], raw: Any) -> t_Cast:
     else:
         return raw
 
+ROOT = "https://discord.com/api"
+
+@dc.dataclass
+class Token:
+    access_token: str
+    expires_in: int
+    scope: str
+    token_type: str
+
+    now: float = dc.field(init=False)
+
+    def __post_init__(self):
+        self.now = time.time()
+
+    def expired(self):
+        return (time.time() - self.now) > self.expires_in
+
+    @classmethod
+    def get_token(cls, c_id: str, c_secret: str):
+        data = {
+            'grant_type': 'client_credentials',
+            'scope': 'identify connections guilds'
+        }
+        headers = {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        }
+        r = requests.post(f'{ROOT}/oauth2/token', data=data, headers=headers, auth=(c_id, c_secret))
+        r.raise_for_status()
+        return cls(**r.json())
+
 class Http(str, Enum):
     GET = "GET"
     PUT = "PUT"
     PATCH = "PATCH"
     POST = "POST"
     DELETE = "DELETE"
-
-ROOT = "https://discord.com/api"
 
 t_Ret = TypeVar("t_Ret")
 class HttpReq(ABC, Generic[t_Ret]):
@@ -108,10 +157,10 @@ class HttpReq(ABC, Generic[t_Ret]):
     def cast(self, data: Any) -> t_Ret:
         ...
 
-    def do_with(self, token: str) -> t_Ret:
+    def do_with(self, token: Token) -> t_Ret:
         res = request(self.method, ROOT + self.endpoint,
             headers={
-                "Authorization": f"Bearer {token}"
+                "Authorization": f"{token.token_type} {token.access_token}"
             },
             params=dc.asdict(self.query) if self.query else None,
             json=dc.asdict(self.form) if self.form else None
@@ -119,7 +168,8 @@ class HttpReq(ABC, Generic[t_Ret]):
         if not res.status_code in range(200, 300):
             error = res.json()
             if error.get("retry_after"):
-                sleep(error["retry_after"])
+                print(f"rate limited, waiting {error['retry_after']/1000} seconds")
+                sleep(error["retry_after"]/1000)
                 return self.do_with(token)
             raise Exception(str(error))
         return self.cast(res.json() if res.text else None)

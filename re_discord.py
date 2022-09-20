@@ -81,10 +81,9 @@ def unfuck_type(typ: str):
         r"two ints \(shard_id \| num_shards\)": "tuple[int, int]",
         r"Unsigned ": "",
         r" \(big endian\)": "",
-        r"(?:Message)?Component": "ActionRow | Button | SelectMenu | TextInput",
+        r"(?:Message)?Component": "MessageComponent",
         r"\bMember": "GuildMember",
         r"\bTag\b": "ForumTag",
-        r"\bInteraction(?:Callback)?Data\b": "ApplicationCommandData | MessageComponentData | ModalSubmitData",
         r"\bChoice\b": "ApplicationCommandOptionChoice",
         r"\b((?:ActionType)|(?:ActionMetadata)|(?:Action))\b": r"AutoModeration\1",
         r"\b(?:Event)?((?:EntityMetadata)|(?:PrivacyLevel)|(?:EntityType))\b": r"GuildScheduledEvent\1",
@@ -127,6 +126,10 @@ def format_field(m: re.Match[str]):
             typ += " | None"
         typ += " = field(kw_only=True, default=None)"
         name = name[:-1]
+    
+    match = re.search(r"`(\d+)`", desc)
+    if match and "int" in typ and not re.search(r"min|max|version", name):
+        typ += f" = field(kw_only=True, default={match.group(1)})"
 
     return f"    # {desc}\n    {name}: {typ}"
 
@@ -321,6 +324,10 @@ from typing import Any
 from dubious.discord.disc import Disc, Snowflake
 
 {newline.join([parse(Root, content) for content in inp])}
+
+InteractionData = ApplicationCommandData | MessageComponentData | ModalSubmitData
+InteractionCallbackData = InteractionCallbackMessages | InteractionCallbackAutocomplete | InteractionCallbackModal
+MessageComponent = ActionRow | Button | SelectMenu | TextInput
 """)
     with open("dubious/discord/req.py", "w") as f:
         f.write(f"""
