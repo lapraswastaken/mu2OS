@@ -671,7 +671,31 @@ class GetChannelMessage(HttpReq[Message]):
 
 @dataclass
 class CreateMessage(HttpReq[Message]):
+    @dataclass
+    class Form(Disc):
+
+        # Message contents (up to 2000 characters)                                                                                                                                   
+        content: str | None = field(kw_only=True, default=None)
+        # `true` if this is a TTS message                                                                                                                                            
+        tts: bool | None = field(kw_only=True, default=None)
+        # Embedded `rich` content (up to 6000 characters)                                                                                                                            
+        embeds: list[Embed] | None = field(kw_only=True, default=None)
+        # Allowed mentions for the message                                                                                                                                           
+        allowed_mentions: AllowedMentions | None = field(kw_only=True, default=None)
+        # Include to make your message a reply                                                                                                                                       
+        message_reference: MessageReference | None = field(kw_only=True, default=None)
+        # Components to include with the message                                                                                                                                     
+        components: list[MessageComponent] | None = field(kw_only=True, default=None)
+        # IDs of up to 3 `stickers` in the server to send in the message                                                                     
+        sticker_ids: list[Snowflake] | None = field(kw_only=True, default=None)
+        # JSON-encoded body of non-file params, only for `multipart/form-data` requests. See `Uploading Files`                                      
+        payload_json: str | None = field(kw_only=True, default=None)
+        # Attachment objects with filename and description. See `Uploading Files`                                                                   
+        attachments: list[Attachment] | None = field(kw_only=True, default=None)
+        # `Message flags`
+        flags: int | None = field(kw_only=True, default=None)
     channel_id: InitVar[str]
+    form: Form | None = None
 
     method = Http.POST
     endpoint: str = field(init=False)

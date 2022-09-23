@@ -274,10 +274,10 @@ def create_http_input_disc(m: re.Match[str]):
         if match:
             subname, = match.groups()
             subname = f"_{namify(subname)}"
-    if re.search("JSON|Form", name):
+    if re.search(r"JSON|Form", name):
         name = f"Form{subname}"
         Http.data.type_form.append(f"{name}")
-    elif re.search("Query", name):
+    elif re.search(r"Query", name):
         name = f"Query{subname}"
         Http.data.type_query.append(f"{name}")
     Http.data.inner.append(f"    @dataclass\n    class {name}(Disc):")
@@ -289,6 +289,10 @@ def format_response_field(m: re.Match[str]):
         Http.data.response.append(format_field(m))
     else:
         Http.data.inner.append(prepend_lines("    ", format_field(m)))
+    return ""
+
+@Http.hook("###### Limitations")
+def skip_limitations_exit(_):
     return ""
 
 @Disc.hook(r"^#")

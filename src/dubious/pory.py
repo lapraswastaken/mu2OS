@@ -2,6 +2,8 @@
 from dataclasses import InitVar, asdict, dataclass, field
 from inspect import Parameter, signature
 import inspect
+from pprint import pprint
+import re
 import time
 from typing import Annotated, Any, Callable, TypeVar, get_args, get_origin
 
@@ -47,19 +49,32 @@ option_types = {
     api.Attachment: api.ApplicationCommandOptionType.ATTACHMENT,
 }
 
+pat_discord_name = re.compile(r"^[-_a-z]{1,32}$")
+
 def _format_option(opt: Parameter):
-    name = opt.name
-    req = opt.default == Parameter.empty
+    if not pat_discord_name.search(opt.name):
+        # https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-naming
+        raise ValueError(f"Option '{opt.name}' has an incorrect name.")
     desc = "No description."
     choices = None
     if get_origin(opt.annotation) == Annotated:
         anns = get_args(opt.annotation)
         typ = option_types[anns[0]]
-        if len(anns) > 1: desc = anns[1]
+        if len(anns) > 1:
+            if len(anns[1]) > 100:
+                raise ValueError(f"The description for option '{opt.name}' is too long. Should be 100 or less; got {len(anns[1])}.")
+            desc = anns[1]
         if len(anns) > 2: choices = anns[2]
     else:
         typ = option_types[opt.annotation]
-    return api.ApplicationCommandOption(typ, name, desc, required=req, choices=choices)
+
+    return api.ApplicationCommandOption(
+        typ,
+        opt.name,
+        desc,
+        required=opt.default == Parameter.empty,
+        choices=choices
+    )
 
 ta_CommandCallback = Callable[..., api.InteractionCallbackMessages | api.InteractionCallbackModal]
 ta_ComponentCallback = Callable[..., api.InteractionCallbackMessages | api.InteractionCallbackModal]
@@ -78,7 +93,7 @@ class Pory:
     _token: disc.Token = field(init=False)
     @property
     def token(self):
-        if self._token.expired():
+        if not hasattr(self, "_token") or self._token.expired():
             self._token = disc.Token.get_token(self.id, self.secret)
         return self._token
     @token.setter
@@ -87,9 +102,6 @@ class Pory:
     @token.deleter
     def token(self):
         del self._token
-
-    def __post_init__(self):
-        self.token = disc.Token.get_token(self.id, self.secret)
 
     t_Callback = TypeVar("t_Callback", bound=ta_CommandCallback | ta_ComponentCallback | ta_ModalCallback)
     def command(self, callback: t_Callback) -> t_Callback:
@@ -107,17 +119,29 @@ class Pory:
                 req.DeleteGlobalApplicationCommand(self.id, command.id).do_with(self.token)
 
         for name, command in self.on_command.items():
+            if not pat_discord_name.search(name):
+                # https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-naming
+                raise ValueError(f"Command '{name}' has an incorrect name.")
             if not command.__doc__:
-                raise ValueError(f"Callback for command \"{name}\" doesn't have a docstring description.")
+                raise ValueError(f"Command '{name}' doesn't have a docstring description.")
+            if len(command.__doc__) > 100:
+                raise ValueError(f"The docstring on command '{name}' is too long. Should be 100 or less; got {len(command.__doc__)}.")
+            
             options: list[api.ApplicationCommandOption] = []
             for opt in signature(command).parameters.values():
                 if opt.kind == Parameter.POSITIONAL_OR_KEYWORD:
-                    options.append(_format_option(opt))
+                    try:
+                        options.append(_format_option(opt))
+                    except ValueError as e:
+                        raise ValueError(f"In command '{name}': {e}")
+            if len(options) > 25: raise ValueError(f"There are too many options for command \"{name}\". Should be 25 or less; got {len(options)}.")
+            
             req.CreateGlobalApplicationCommand(
                 self.id,
                 req.CreateGlobalApplicationCommand.Form(
                     name, command.__doc__,
-                    options = options if options else None
+                    options = options if options else None,
+                    type=api.ApplicationCommandType.CHAT_INPUT
                 )
             ).do_with(self.token)
     
@@ -177,3 +201,20 @@ class Pory:
         if not typ: raise Exception()
 
         return asdict(api.InteractionResponse(typ, data=got))
+    
+    def send(self, channel_id: api.Snowflake, message: req.CreateMessage.Form):
+        return req.CreateMessage(channel_id, message).do_with(self.token)
+
+    def history(self, channel_id: api.Snowflake, limit: int=200):
+        messages: list[api.Message] = []
+        while limit:
+            chunk = limit
+            if chunk > 100:
+                chunk = 100
+            messages += req.GetChannelMessages(channel_id, req.GetChannelMessages.Query(
+                limit = chunk
+            )).do_with(self.token)
+            for message in messages:
+                yield message
+            limit -= chunk
+

@@ -125,11 +125,12 @@ class Token:
     def expired(self):
         return (time.time() - self.now) > self.expires_in
 
+    t_Scope = TypeVar("t_Scope", bound=str)
     @classmethod
     def get_token(cls, c_id: str, c_secret: str):
         data = {
             'grant_type': 'client_credentials',
-            'scope': 'identify connections guilds'
+            'scope': "bot applications.commands"
         }
         headers = {
             'Content-Type': 'application/x-www-form-urlencoded'
@@ -171,5 +172,5 @@ class HttpReq(ABC, Generic[t_Ret]):
                 print(f"rate limited, waiting {error['retry_after']/1000} seconds")
                 sleep(error["retry_after"]/1000)
                 return self.do_with(token)
-            raise Exception(str(error))
+            raise Exception(f"{res.status_code}: {str(error)}")
         return self.cast(res.json() if res.text else None)
