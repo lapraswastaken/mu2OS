@@ -5,7 +5,7 @@ import os
 import re
 
 import inflect
-from parser import Parser, parse, do_steps
+from docparse.parser import Parser, parse, do_steps
 
 p = inflect.engine()
 
@@ -29,7 +29,7 @@ Disc = Root.copyto(AppendNewlineParser)
 @Root.hook(r"###### (.+?) Structure")
 def create_disc_class(m: re.Match[str]):
     name, = m.groups()
-    return f"@dataclass\nclass {namify(name)}(Disc):", Disc
+    return f"@dataclass(frozen=True)\nclass {namify(name)}(Disc):", Disc
 
 def unfuck_type(typ: str):
     return do_steps(typ, {
@@ -193,6 +193,7 @@ class HttpReqData:
 
     inner: list[str] = field(default_factory=list, init=False)
     response: list[str] = field(default_factory=list, init=False)
+    nullable: bool = field(default=False, init=False)
 
     def format(self):
         ep_parts = [arg for arg in self.endpoint.split("/") if arg]
@@ -203,7 +204,7 @@ class HttpReqData:
             ((f"\n".join(self.response) + "\n") if self.response else "") +
             f"@dataclass\n"
             f"class {self.name}(HttpReq[{self.type_ret}]):\n" +
-            "\n".join(self.inner) + (
+            "\n".join(line for line in self.inner if line) + (
             "\n" if self.type_ret.endswith("Response") or self.type_query or self.type_form else "") +
             "\n".join([f"    {arg}: InitVar[str]" for arg in ep_args]) + ("\n" if ep_args else "") + (
             f"    query: {'|'.join(self.type_query)} | None = None\n" if self.type_query else '') + (
@@ -257,12 +258,22 @@ def add_http_req_desc(m: re.Match[str]):
     match = re.findall(r"Returns ([^\.]+)", desc)
     if match:
         Http.data.type_ret = unfuck_type(match[-1])
+    match = re.findall(r"Body is ([^\.]+)", desc)
+    if match:
+        Http.data.type_form.append(unfuck_type(match[-1]))
+    return ""
+
+@Http.hook(r"^> (.+)")
+def make_http_req_nullable(m: re.Match[str]):
+    content, = m.groups()
+    if re.match(r"All parameters to this endpoint are optional and nullable\.", content):
+        Http.data.nullable = True
     return ""
 
 @Http.hook(r"###### (Response) (?:Structure|Body)")
 def create_http_response_disc(m: re.Match[str]):
     Http.data.type_ret = f"Response_{Http.data.name}"
-    Http.data.response.append(f"@dataclass\nclass {Http.data.type_ret}(Disc):")
+    Http.data.response.append(f"@dataclass(frozen=True)\nclass {Http.data.type_ret}(Disc):")
     return ""
 
 @Http.hook(r"###### (.+?) Params(.*)")
@@ -276,19 +287,23 @@ def create_http_input_disc(m: re.Match[str]):
             subname = f"_{namify(subname)}"
     if re.search(r"JSON|Form", name):
         name = f"Form{subname}"
-        Http.data.type_form.append(f"{name}")
+        Http.data.type_form.append(f"{Http.data.name}.{name}")
     elif re.search(r"Query", name):
         name = f"Query{subname}"
-        Http.data.type_query.append(f"{name}")
-    Http.data.inner.append(f"    @dataclass\n    class {name}(Disc):")
+        Http.data.type_query.append(f"{Http.data.name}.{name}")
+    Http.data.inner.append(f"    @dataclass(frozen=True)\n    class {name}(Disc):")
     return ""
 
 @Http.hook(pat_field)
 def format_response_field(m: re.Match[str]):
-    if Http.data.response:
-        Http.data.response.append(format_field(m))
-    else:
-        Http.data.inner.append(prepend_lines("    ", format_field(m)))
+    line = format_field(m)
+    if line:
+        if Http.data.nullable:
+            line += " | None = field(kw_only=True, default=None)"
+        if Http.data.response:
+            Http.data.response.append(line)
+        else:
+            Http.data.inner.append(prepend_lines("    ", line))
     return ""
 
 @Http.hook("###### Limitations")
@@ -304,7 +319,7 @@ def to_root(m: re.Match):
 if __name__ == "__main__":
 
     inp: list[str] = []
-    path_root = os.path.join("discord-api-docs", "docs")
+    path_root = os.path.join("src/docparse/discord-api-docs", "docs")
     for folder in ["interactions", "resources"]:
         path_folder = os.path.join(path_root, folder)
         for file in os.listdir(path_folder):
@@ -317,7 +332,7 @@ if __name__ == "__main__":
         with open(path_file, "r") as f:
             inp.append(f.read())
     newline = "\n"
-    with open("dubious/discord/api.py", "w") as f:
+    with open("src/dubious/discord/api.py", "w") as f:
         f.write(f"""
 from __future__ import annotations
 
@@ -333,7 +348,7 @@ InteractionData = ApplicationCommandData | MessageComponentData | ModalSubmitDat
 InteractionCallbackData = InteractionCallbackMessages | InteractionCallbackAutocomplete | InteractionCallbackModal
 MessageComponent = ActionRow | Button | SelectMenu | TextInput
 """)
-    with open("dubious/discord/req.py", "w") as f:
+    with open("src/dubious/discord/req.py", "w") as f:
         f.write(f"""
 from __future__ import annotations
 

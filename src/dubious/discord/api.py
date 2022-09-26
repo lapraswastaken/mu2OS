@@ -7,7 +7,7 @@ from typing import Any
 
 from dubious.discord.disc import Disc, Snowflake
 
-@dataclass
+@dataclass(frozen=True)
 class ApplicationCommand(Disc):
     # Unique ID of command                                                                                                                                              
     id: Snowflake
@@ -44,7 +44,7 @@ class ApplicationCommandType(int, Enum):
     # A UI-based command that shows up when you right click or tap on a message
     MESSAGE = 3
 
-@dataclass
+@dataclass(frozen=True)
 class ApplicationCommandOption(Disc):
     # Type of option                                                                                                      
     type:  ApplicationCommandOptionType
@@ -93,7 +93,7 @@ class ApplicationCommandOptionType(int, Enum):
     # `attachment` object
     ATTACHMENT = 11
 
-@dataclass
+@dataclass(frozen=True)
 class ApplicationCommandOptionChoice(Disc):
     # 1-100 character choice name                                                                
     name: str
@@ -102,7 +102,7 @@ class ApplicationCommandOptionChoice(Disc):
     # Value for the choice, up to 100 characters if string                                       
     value: str | int | float 
 
-@dataclass
+@dataclass(frozen=True)
 class GuildApplicationCommandPermissions(Disc):
     # ID of the command or the application ID             
     id: Snowflake
@@ -113,7 +113,7 @@ class GuildApplicationCommandPermissions(Disc):
     # Permissions for the command in the guild, max of 100
     permissions: list[ApplicationCommandPermission]
 
-@dataclass
+@dataclass(frozen=True)
 class ApplicationCommandPermission(Disc):
     # ID of the role, user, or channel. It can also be a `permission constant`
     id: Snowflake
@@ -127,7 +127,7 @@ class ApplicationCommandPermissionType(int, Enum):
     USER = 2
     CHANNEL = 3
 
-@dataclass
+@dataclass(frozen=True)
 class Interaction(Disc):
     # ID of the interaction                                                                         
     id: Snowflake
@@ -165,7 +165,7 @@ class InteractionType(int, Enum):
     APPLICATION_COMMAND_AUTOCOMPLETE = 4
     MODAL_SUBMIT = 5
 
-@dataclass
+@dataclass(frozen=True)
 class ApplicationCommandData(Disc):
     # the ``ID`` of the invoked command                                                 
     id: Snowflake
@@ -182,7 +182,7 @@ class ApplicationCommandData(Disc):
     # id of the user or message targeted by a `user` command
     target_id: Snowflake | None = field(kw_only=True, default=None)
 
-@dataclass
+@dataclass(frozen=True)
 class MessageComponentData(Disc):
     # the ``custom_id`` of the component                            
     custom_id: str
@@ -191,14 +191,14 @@ class MessageComponentData(Disc):
     # values the user selected in a `select menu` component
     values: list[SelectOption] | None = field(kw_only=True, default=None)
 
-@dataclass
+@dataclass(frozen=True)
 class ModalSubmitData(Disc):
     # the ``custom_id`` of the modal
     custom_id: str
     # the values submitted by the user                                               
     components: list[MessageComponent]
 
-@dataclass
+@dataclass(frozen=True)
 class ResolvedData(Disc):
     # the ids and User objects           
     users: dict[Snowflake, User] | None = field(kw_only=True, default=None)
@@ -213,7 +213,7 @@ class ResolvedData(Disc):
     # the ids and attachment objects     
     attachments: dict[Snowflake, Attachment] | None = field(kw_only=True, default=None)
 
-@dataclass
+@dataclass(frozen=True)
 class ApplicationCommandInteractionDataOption(Disc):
     # Name of the parameter                                                                                                                         
     name: str
@@ -226,7 +226,7 @@ class ApplicationCommandInteractionDataOption(Disc):
     # `true` if this option is the currently focused option for autocomplete                                                                        
     focused: bool | None = field(kw_only=True, default=None)
 
-@dataclass
+@dataclass(frozen=True)
 class MessageInteraction(Disc):
     # ID of the interaction                                                                                                                                                           
     id: Snowflake
@@ -239,7 +239,7 @@ class MessageInteraction(Disc):
     # Member who invoked the interaction in the guild                                                                                                                                 
     member: GuildMember | None = field(kw_only=True, default=None)
 
-@dataclass
+@dataclass(frozen=True)
 class InteractionResponse(Disc):
     # the type of response        
     type: InteractionCallbackType
@@ -262,7 +262,7 @@ class InteractionCallbackType(int, Enum):
     # respond to an interaction with a popup modal
     MODAL = 9
 
-@dataclass
+@dataclass(frozen=True)
 class InteractionCallbackMessages(Disc):
     # is the response TTS                                                                                                                                                                        
     tts: bool | None = field(kw_only=True, default=None)
@@ -279,12 +279,12 @@ class InteractionCallbackMessages(Disc):
     # attachment objects with filename and description                                                                                                                                           
     attachments: list[Attachment] | None = field(kw_only=True, default=None)
 
-@dataclass
+@dataclass(frozen=True)
 class InteractionCallbackAutocomplete(Disc):
     # autocomplete choices (max of 25 choices)
     choices: list[ApplicationCommandOptionChoice]
 
-@dataclass
+@dataclass(frozen=True)
 class InteractionCallbackModal(Disc):
     # a developer-defined identifier for the component, max 100 characters
     custom_id: str
@@ -303,14 +303,14 @@ class ComponentType(int, Enum):
     # A text input object
     TEXT_INPUT = 4
 
-@dataclass
+@dataclass(frozen=True)
 class ActionRow(Disc):
     # `1` for an action row     
     type: int = field(kw_only=True, default=1)
     # the components on this row
     components: list[MessageComponent]
 
-@dataclass
+@dataclass(frozen=True)
 class Button(Disc):
     # `2` for a button                                                                         
     type: int = field(kw_only=True, default=2)
@@ -339,7 +339,7 @@ class ButtonStyle(int, Enum):
     # grey, navigates to a URL | `url`
     LINK = 5
 
-@dataclass
+@dataclass(frozen=True)
 class SelectMenu(Disc):
     # `3` for a select menu                                                    
     type: int = field(kw_only=True, default=3)
@@ -356,7 +356,7 @@ class SelectMenu(Disc):
     # disable the select, default false                                        
     disabled: bool | None = field(kw_only=True, default=None)
 
-@dataclass
+@dataclass(frozen=True)
 class SelectOption(Disc):
     # the user-facing name of the option, max 100 characters     
     label: str
@@ -369,7 +369,7 @@ class SelectOption(Disc):
     # will render this option as selected by default             
     default: bool | None = field(kw_only=True, default=None)
 
-@dataclass
+@dataclass(frozen=True)
 class TextInput(Disc):
     # `4` for a text input                                                                       
     type: int = field(kw_only=True, default=4)
@@ -396,7 +396,7 @@ class TextInputStyle(int, Enum):
     # A multi-line input
     PARAGRAPH = 2
 
-@dataclass
+@dataclass(frozen=True)
 class StageInstance(Disc):
     # The id of this Stage instance                                                                                
     id: Snowflake
@@ -419,7 +419,7 @@ class PrivacyLevel(int, Enum):
     # The Stage instance is visible to only guild members.
     GUILD_ONLY = 2
 
-@dataclass
+@dataclass(frozen=True)
 class AutoModerationRule(Disc):
     # the id of this rule                                                                                      
     id: Snowflake
@@ -466,7 +466,7 @@ class EventType(int, Enum):
     # when a member sends or edits a message in the guild
     MESSAGE_SEND = 1
 
-@dataclass
+@dataclass(frozen=True)
 class AutoModerationAction(Disc):
     # the type of action                                                       
     type: AutoModerationActionType
@@ -481,14 +481,14 @@ class AutoModerationActionType(int, Enum):
     # timeout user for a specified duration *
     TIMEOUT = 3
 
-@dataclass
+@dataclass(frozen=True)
 class AutoModerationActionMetadata(Disc):
     # SEND_ALERT_MESSAGE     
     channel_id: Snowflake
     # TIMEOUT                
     duration_seconds: int
 
-@dataclass
+@dataclass(frozen=True)
 class Channel(Disc):
     # the id of this channel                                                                                                                                                                       
     id: Snowflake
@@ -587,7 +587,7 @@ class ChannelFlag(int, Enum):
     # whether a tag is required to be specified when creating a thread in a `GUILD_FORUM` channel. Tags are specified in the `applied_tags` field.
     REQUIRE_TAG = 1 << 4
 
-@dataclass
+@dataclass(frozen=True)
 class Message(Disc):
     # id of the message                                                                                                                                                                                                                                                       
     id: Snowflake
@@ -676,7 +676,7 @@ class MessageType(int, Enum):
     CONTEXT_MENU_COMMAND = 23
     AUTO_MODERATION_ACTION = 24
 
-@dataclass
+@dataclass(frozen=True)
 class MessageActivity(Disc):
     # `type of message activity`                         
     type: int
@@ -709,7 +709,7 @@ class MessageFlag(int, Enum):
     # this message failed to mention some roles and add their members to the thread
     FAILED_TO_MENTION_SOME_ROLES_IN_THREAD = 1 << 8
 
-@dataclass
+@dataclass(frozen=True)
 class MessageReference(Disc):
     # id of the originating message                                                                                                          
     message_id: Snowflake | None = field(kw_only=True, default=None)
@@ -720,14 +720,14 @@ class MessageReference(Disc):
     # when sending, whether to error if the referenced message doesn't exist instead of sending as a normal (non-reply) message, default true
     fail_if_not_exists: bool | None = field(kw_only=True, default=None)
 
-@dataclass
+@dataclass(frozen=True)
 class FollowedChannel(Disc):
     # source channel id        
     channel_id: Snowflake
     # created target webhook id
     webhook_id: Snowflake
 
-@dataclass
+@dataclass(frozen=True)
 class Reaction(Disc):
     # times this emoji has been used to react          
     count: int
@@ -736,7 +736,7 @@ class Reaction(Disc):
     # emoji information                                
     emoji: Emoji
 
-@dataclass
+@dataclass(frozen=True)
 class Overwrite(Disc):
     # role or user id              
     id: Snowflake
@@ -747,7 +747,7 @@ class Overwrite(Disc):
     # permission bit set           
     deny: str
 
-@dataclass
+@dataclass(frozen=True)
 class ThreadMetadata(Disc):
     # whether the thread is archived                                                                                                            
     archived: bool
@@ -762,7 +762,7 @@ class ThreadMetadata(Disc):
     # timestamp when the thread was created; only populated for threads created after 2022-01-09                                                
     create_timestamp: str | None = field(kw_only=True, default=None)
 
-@dataclass
+@dataclass(frozen=True)
 class ThreadMember(Disc):
     # the id of the thread                                           
     id: Snowflake | None = field(kw_only=True, default=None)
@@ -773,14 +773,14 @@ class ThreadMember(Disc):
     # any user-thread settings, currently only used for notifications
     flags: int
 
-@dataclass
+@dataclass(frozen=True)
 class DefaultReaction(Disc):
     # the id of a guild's custom emoji  
     emoji_id: Snowflake
     # the unicode character of the emoji
     emoji_name: str | None
 
-@dataclass
+@dataclass(frozen=True)
 class ForumTag(Disc):
     # the id of the tag                                                                                             
     id: Snowflake
@@ -793,7 +793,7 @@ class ForumTag(Disc):
     # the unicode character of the emoji \*                                                                         
     emoji_name: str | None
 
-@dataclass
+@dataclass(frozen=True)
 class Embed(Disc):
     # title of embed                                                                                             
     title: str | None = field(kw_only=True, default=None)
@@ -822,7 +822,7 @@ class Embed(Disc):
     # fields information                                                                                         
     fields: list[EmbedField] | None = field(kw_only=True, default=None)
 
-@dataclass
+@dataclass(frozen=True)
 class EmbedThumbnail(Disc):
     # source url of thumbnail (only supports http(s) and attachments)
     url: str
@@ -833,7 +833,7 @@ class EmbedThumbnail(Disc):
     # width of thumbnail                                             
     width: int | None = field(kw_only=True, default=None)
 
-@dataclass
+@dataclass(frozen=True)
 class EmbedVideo(Disc):
     # source url of video       
     url: str | None = field(kw_only=True, default=None)
@@ -844,7 +844,7 @@ class EmbedVideo(Disc):
     # width of video            
     width: int | None = field(kw_only=True, default=None)
 
-@dataclass
+@dataclass(frozen=True)
 class EmbedImage(Disc):
     # source url of image (only supports http(s) and attachments)
     url: str
@@ -855,14 +855,14 @@ class EmbedImage(Disc):
     # width of image                                             
     width: int | None = field(kw_only=True, default=None)
 
-@dataclass
+@dataclass(frozen=True)
 class EmbedProvider(Disc):
     # name of provider
     name: str | None = field(kw_only=True, default=None)
     # url of provider 
     url: str | None = field(kw_only=True, default=None)
 
-@dataclass
+@dataclass(frozen=True)
 class EmbedAuthor(Disc):
     # name of author                                            
     name: str
@@ -873,7 +873,7 @@ class EmbedAuthor(Disc):
     # a proxied url of author icon                              
     proxy_icon_url: str | None = field(kw_only=True, default=None)
 
-@dataclass
+@dataclass(frozen=True)
 class EmbedFooter(Disc):
     # footer text                                               
     text: str
@@ -882,7 +882,7 @@ class EmbedFooter(Disc):
     # a proxied url of footer icon                              
     proxy_icon_url: str | None = field(kw_only=True, default=None)
 
-@dataclass
+@dataclass(frozen=True)
 class EmbedField(Disc):
     # name of the field                              
     name: str
@@ -891,7 +891,7 @@ class EmbedField(Disc):
     # whether or not this field should display inline
     inline: bool | None = field(kw_only=True, default=None)
 
-@dataclass
+@dataclass(frozen=True)
 class Attachment(Disc):
     # attachment id                                                          
     id: Snowflake
@@ -914,7 +914,7 @@ class Attachment(Disc):
     # whether this attachment is ephemeral                                   
     ephemeral: bool | None = field(kw_only=True, default=None)
 
-@dataclass
+@dataclass(frozen=True)
 class ChannelMention(Disc):
     # id of the channel                                                          
     id: Snowflake
@@ -933,7 +933,7 @@ class AllowedMentionType(str, Enum):
     # Controls @everyone and @here mentions
     EVERYONE = "everyone"
 
-@dataclass
+@dataclass(frozen=True)
 class AllowedMentions(Disc):
     # An array of `allowed mention types` to parse from the content.
     parse: list[AllowedMentionType]
@@ -944,7 +944,7 @@ class AllowedMentions(Disc):
     # For replies, whether to mention the author of the message being replied to (default false)                                           
     replied_user: bool
 
-@dataclass
+@dataclass(frozen=True)
 class ForumThreadMessageParams(Disc):
     # Message contents (up to 2000 characters)                                                                                                                                   
     content: str | None = field(kw_only=True, default=None)
@@ -963,7 +963,7 @@ class ForumThreadMessageParams(Disc):
     # `Message flags`
     flags: int | None = field(kw_only=True, default=None)
 
-@dataclass
+@dataclass(frozen=True)
 class Sticker(Disc):
     # `id of the sticker`                                                                                                               
     id: Snowflake
@@ -1001,7 +1001,7 @@ class StickerFormatType(int, Enum):
     APNG = 2
     LOTTIE = 3
 
-@dataclass
+@dataclass(frozen=True)
 class StickerItem(Disc):
     # id of the sticker                                                                    
     id: Snowflake
@@ -1010,7 +1010,7 @@ class StickerItem(Disc):
     # `type of sticker format`
     format_type: int
 
-@dataclass
+@dataclass(frozen=True)
 class StickerPack(Disc):
     # id of the sticker pack                                                   
     id: Snowflake
@@ -1027,7 +1027,7 @@ class StickerPack(Disc):
     # id of the sticker pack's `banner image`
     banner_asset_id: Snowflake | None = field(kw_only=True, default=None)
 
-@dataclass
+@dataclass(frozen=True)
 class GuildScheduledEvent(Disc):
     # the id of the scheduled event                                                                                                                                                                                        
     id: Snowflake
@@ -1077,12 +1077,12 @@ class GuildScheduledEventStatusType(int, Enum):
     COMPLETED = 3
     CANCELED = 4
 
-@dataclass
+@dataclass(frozen=True)
 class GuildScheduledEventEntityMetadata(Disc):
     # location of the event (1-100 characters)
     location: str | None = field(kw_only=True, default=None)
 
-@dataclass
+@dataclass(frozen=True)
 class GuildScheduledEventUser(Disc):
     # the scheduled event id which the user subscribed to                                                
     guild_scheduled_event_id: Snowflake
@@ -1091,7 +1091,7 @@ class GuildScheduledEventUser(Disc):
     # guild member data for this user for the guild which this event belongs to, if any                  
     member: GuildMember | None = field(kw_only=True, default=None)
 
-@dataclass
+@dataclass(frozen=True)
 class Webhook(Disc):
     # the id of the webhook                                                                                        
     id: Snowflake
@@ -1124,7 +1124,7 @@ class WebhookType(int, Enum):
     # Application webhooks are webhooks used with Interactions
     APPLICATION = 3
 
-@dataclass
+@dataclass(frozen=True)
 class Invite(Disc):
     # the invite code (unique ID)                                                                                                                   
     code: str
@@ -1155,7 +1155,7 @@ class InviteTargetType(int, Enum):
     STREAM = 1
     EMBEDDED_APPLICATION = 2
 
-@dataclass
+@dataclass(frozen=True)
 class InviteMetadata(Disc):
     # number of times this invite has been used           
     uses: int
@@ -1168,7 +1168,7 @@ class InviteMetadata(Disc):
     # when this invite was created                        
     created_at: str
 
-@dataclass
+@dataclass(frozen=True)
 class InviteStageInstance(Disc):
     # the members speaking in the Stage                 
     members: list[GuildMember]
@@ -1179,7 +1179,7 @@ class InviteStageInstance(Disc):
     # the topic of the Stage instance (1-120 characters)
     topic: str
 
-@dataclass
+@dataclass(frozen=True)
 class Application(Disc):
     # the id of the app                                                                                                        
     id: Snowflake
@@ -1242,14 +1242,14 @@ class ApplicationFlag(int, Enum):
     # Indicates if an app has registered global `application commands`
     APPLICATION_COMMAND_BADGE = 1 << 23
 
-@dataclass
+@dataclass(frozen=True)
 class InstallParams(Disc):
     # the `scopes` to add the application to the server with
     scopes: list[str]
     # the `permissions` to request for the bot role                                   
     permissions: str
 
-@dataclass
+@dataclass(frozen=True)
 class User(Disc):
     # the user's id                                                                                       
     id: Snowflake
@@ -1317,7 +1317,7 @@ class PremiumType(int, Enum):
     NITROCLASSIC = 1
     NITRO = 2
 
-@dataclass
+@dataclass(frozen=True)
 class Connection(Disc):
     # id of the connection account                                                            
     id: str
@@ -1344,7 +1344,7 @@ class VisibilityType(int, Enum):
     # visible to everyone
     EVERYONE = 1
 
-@dataclass
+@dataclass(frozen=True)
 class AuditLog(Disc):
     # List of application commands referenced in the audit log   
     application_commands: list[ApplicationCommand]
@@ -1363,7 +1363,7 @@ class AuditLog(Disc):
     # List of webhooks referenced in the audit log               
     webhooks: list[Webhook]
 
-@dataclass
+@dataclass(frozen=True)
 class AuditLogEntry(Disc):
     # ID of the affected entity (webhook, user, role, etc.)
     target_id: str | None
@@ -1486,7 +1486,7 @@ class AuditLogEventType(int, Enum):
     # Message was blocked by AutoMod (according to a rule)      |
     AUTO_MODERATION_BLOCK_MESSAGE = 143
 
-@dataclass
+@dataclass(frozen=True)
 class OptionalAuditEntryInfo(Disc):
     # ID of the app whose permissions were targeted                   
     application_id: Snowflake
@@ -1507,7 +1507,7 @@ class OptionalAuditEntryInfo(Disc):
     # Type of overwritten entity - role (`"0"`) or member (`"1"`)     
     type: str
 
-@dataclass
+@dataclass(frozen=True)
 class AuditLogChange(Disc):
     # New value of the key                                                                                                              
     new_value: Any | None = field(kw_only=True, default=None)
@@ -1516,7 +1516,7 @@ class AuditLogChange(Disc):
     # Name of the changed entity, with a few `exceptions`
     key: str
 
-@dataclass
+@dataclass(frozen=True)
 class VoiceState(Disc):
     # the guild id this voice state is for          
     guild_id: Snowflake | None = field(kw_only=True, default=None)
@@ -1545,7 +1545,7 @@ class VoiceState(Disc):
     # the time at which the user requested to speak 
     request_to_speak_timestamp: str | None
 
-@dataclass
+@dataclass(frozen=True)
 class VoiceRegion(Disc):
     # unique ID for the region                                             
     id: str
@@ -1558,7 +1558,7 @@ class VoiceRegion(Disc):
     # whether this is a custom voice region (used for events/etc)          
     custom: bool
 
-@dataclass
+@dataclass(frozen=True)
 class Guild(Disc):
     # guild id                                                                                                                                                              
     id: Snowflake
@@ -1737,7 +1737,7 @@ class GuildFeature(str, Enum):
     # guild has enabled the welcome screen
     WELCOME_SCREEN_ENABLED = "WELCOME_SCREEN_ENABLED"
 
-@dataclass
+@dataclass(frozen=True)
 class GuildPreview(Disc):
     # guild id                                                   
     id: Snowflake
@@ -1762,14 +1762,14 @@ class GuildPreview(Disc):
     # custom guild stickers                                     
     stickers: list[Sticker]
 
-@dataclass
+@dataclass(frozen=True)
 class GuildWidgetSettings(Disc):
     # whether the widget is enabled
     enabled: bool
     # the widget channel id        
     channel_id: Snowflake | None
 
-@dataclass
+@dataclass(frozen=True)
 class GuildWidget(Disc):
     # guild id                                                            
     id: Snowflake
@@ -1784,7 +1784,7 @@ class GuildWidget(Disc):
     # number of online members in this guild                              
     presence_count: int
 
-@dataclass
+@dataclass(frozen=True)
 class GuildMember(Disc):
     # the user this guild member represents                                                                                                                                                                                               
     user: User | None = field(kw_only=True, default=None)
@@ -1809,7 +1809,7 @@ class GuildMember(Disc):
     # when the user's `timeout` will expire and the user will be able to communicate in the guild again, null or a time in the past if the user is not timed out
     communication_disabled_until: str | None = field(kw_only=True, default=None)
 
-@dataclass
+@dataclass(frozen=True)
 class Integration(Disc):
     # integration id                                                                 
     id: Snowflake
@@ -1848,14 +1848,14 @@ class IntegrationExpireBehavior(int, Enum):
     REMOVE_ROLE = 0
     KICK = 1
 
-@dataclass
+@dataclass(frozen=True)
 class IntegrationAccount(Disc):
     # id of the account  
     id: str
     # name of the account
     name: str
 
-@dataclass
+@dataclass(frozen=True)
 class IntegrationApplication(Disc):
     # the id of the app                                                     
     id: Snowflake
@@ -1868,21 +1868,21 @@ class IntegrationApplication(Disc):
     # the bot associated with this application                              
     bot: User | None = field(kw_only=True, default=None)
 
-@dataclass
+@dataclass(frozen=True)
 class Ban(Disc):
     # the reason for the ban
     reason: str | None
     # the banned user       
     user: User
 
-@dataclass
+@dataclass(frozen=True)
 class WelcomeScreen(Disc):
     # the server description shown in the welcome screen
     description: str | None
     # the channels shown in the welcome screen, up to 5 
     welcome_channels: list[WelcomeScreenChannel]
 
-@dataclass
+@dataclass(frozen=True)
 class WelcomeScreenChannel(Disc):
     # the channel's id                                                                         
     channel_id: Snowflake
@@ -1893,7 +1893,7 @@ class WelcomeScreenChannel(Disc):
     # the emoji name if custom, the unicode character if standard, or `null` if no emoji is set
     emoji_name: str | None
 
-@dataclass
+@dataclass(frozen=True)
 class GuildTemplate(Disc):
     # the template code (unique ID)                         
     code: str
@@ -1918,7 +1918,7 @@ class GuildTemplate(Disc):
     # whether the template has unsynced changes             
     is_dirty: bool | None
 
-@dataclass
+@dataclass(frozen=True)
 class Emoji(Disc):
     # `emoji id`                             
     id: Snowflake | None
@@ -2077,7 +2077,7 @@ class BitwisePermissionFlag(int, Enum):
     # Allows for timing out users to prevent them from sending or reacting to messages in chat and threads, and from speaking in voice and stage channels |
     MODERATE_MEMBERS = 1 << 40
 
-@dataclass
+@dataclass(frozen=True)
 class Role(Disc):
     # role id                                          
     id: Snowflake
@@ -2100,7 +2100,7 @@ class Role(Disc):
     # the tags this role has                           
     tags: RoleTags | None = field(kw_only=True, default=None)
 
-@dataclass
+@dataclass(frozen=True)
 class RoleTags(Disc):
     # the id of the bot this role belongs to             
     bot_id: Snowflake | None = field(kw_only=True, default=None)
@@ -2109,7 +2109,7 @@ class RoleTags(Disc):
     # whether this is the guild's premium subscriber role
     premium_subscriber: bool | None = field(kw_only=True, default=None)
 
-@dataclass
+@dataclass(frozen=True)
 class Team(Disc):
     # description                           
     field: type
@@ -2124,7 +2124,7 @@ class Team(Disc):
     # the user id of the current team owner 
     owner_user_id: Snowflake
 
-@dataclass
+@dataclass(frozen=True)
 class TeamMember(Disc):
     # description                                                                                    
     field: type

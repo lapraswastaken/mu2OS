@@ -1,0 +1,3 @@
+[submodule "src/docparse/discord-api-docs"]
+	path = src/docparse/discord-api-docs
+	url = https://github.com/lapraswastaken/discord-api-docs

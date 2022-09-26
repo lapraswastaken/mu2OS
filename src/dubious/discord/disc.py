@@ -10,7 +10,7 @@ from time import sleep
 import time
 import traceback
 from types import UnionType
-from typing import Any, Generic, TypeVar, ClassVar, get_args, get_origin, get_type_hints
+from typing import Any, Callable, Generic, TypeVar, ClassVar, get_args, get_origin, get_type_hints
 from enum import Enum
 from typing_extensions import TypeVarTuple
 
@@ -45,12 +45,14 @@ class Snowflake(str):
     def __ne__(self, o: object) -> bool:
         return not self == o
 
-@dc.dataclass
+@dc.dataclass(frozen=True)
 class Disc:
     """ Root class for all Discord objects. """
 
 t_Cast = TypeVar("t_Cast")
-def cast(t_to: type[t_Cast], raw: Any) -> t_Cast:
+def cast(t_to: type[t_Cast], raw: Any, debug: Callable[..., None] = lambda *_, **__: None) -> t_Cast:
+    debug(t_to)
+    debug(raw)
     if raw is None: return raw
 
     t_root = get_origin(t_to)
@@ -110,35 +112,6 @@ def cast(t_to: type[t_Cast], raw: Any) -> t_Cast:
 
 ROOT = "https://discord.com/api"
 
-@dc.dataclass
-class Token:
-    access_token: str
-    expires_in: int
-    scope: str
-    token_type: str
-
-    now: float = dc.field(init=False)
-
-    def __post_init__(self):
-        self.now = time.time()
-
-    def expired(self):
-        return (time.time() - self.now) > self.expires_in
-
-    t_Scope = TypeVar("t_Scope", bound=str)
-    @classmethod
-    def get_token(cls, c_id: str, c_secret: str):
-        data = {
-            'grant_type': 'client_credentials',
-            'scope': "bot applications.commands"
-        }
-        headers = {
-            'Content-Type': 'application/x-www-form-urlencoded'
-        }
-        r = requests.post(f'{ROOT}/oauth2/token', data=data, headers=headers, auth=(c_id, c_secret))
-        r.raise_for_status()
-        return cls(**r.json())
-
 class Http(str, Enum):
     GET = "GET"
     PUT = "PUT"
@@ -158,10 +131,10 @@ class HttpReq(ABC, Generic[t_Ret]):
     def cast(self, data: Any) -> t_Ret:
         ...
 
-    def do_with(self, token: Token) -> t_Ret:
+    def do_with(self, token: str) -> t_Ret:
         res = request(self.method, ROOT + self.endpoint,
             headers={
-                "Authorization": f"{token.token_type} {token.access_token}"
+                "Authorization": f"Bot {token}"
             },
             params=dc.asdict(self.query) if self.query else None,
             json=dc.asdict(self.form) if self.form else None

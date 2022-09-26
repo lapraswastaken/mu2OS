@@ -9,13 +9,12 @@ from dubious.discord.api import *
 
 @dataclass
 class GetGlobalApplicationCommands(HttpReq[list[ApplicationCommand]]):
-    @dataclass
+    @dataclass(frozen=True)
     class Query(Disc):
-
         # Whether to include full localization dictionaries (`name_localizations` and `description_localizations`) in the returned objects, instead of the `name_localized` and `description_localized` fields. Default `false`.
         with_localizations: bool | None = field(kw_only=True, default=None)
     application_id: InitVar[str]
-    query: Query | None = None
+    query: GetGlobalApplicationCommands.Query | None = None
 
     method = Http.GET
     endpoint: str = field(init=False)
@@ -28,9 +27,8 @@ class GetGlobalApplicationCommands(HttpReq[list[ApplicationCommand]]):
 
 @dataclass
 class CreateGlobalApplicationCommand(HttpReq[ApplicationCommand]):
-    @dataclass
+    @dataclass(frozen=True)
     class Form(Disc):
-
         # `Name of command`, 1-32 characters                                   
         name: str
         # Localization dictionary for the `name` field. Values follow the same restrictions as `name`                                                                         
@@ -50,7 +48,7 @@ class CreateGlobalApplicationCommand(HttpReq[ApplicationCommand]):
         # Type of command, defaults `1` if not set                                                                                                                            
         type:  ApplicationCommandType | None = field(kw_only=True, default=None)
     application_id: InitVar[str]
-    form: Form | None = None
+    form: CreateGlobalApplicationCommand.Form | None = None
 
     method = Http.POST
     endpoint: str = field(init=False)
@@ -77,9 +75,8 @@ class GetGlobalApplicationCommand(HttpReq[ApplicationCommand]):
 
 @dataclass
 class EditGlobalApplicationCommand(HttpReq[ApplicationCommand]):
-    @dataclass
+    @dataclass(frozen=True)
     class Form(Disc):
-
         # `Name of command`, 1-32 characters                                   
         name: str | None = field(kw_only=True, default=None)
         # Localization dictionary for the `name` field. Values follow the same restrictions as `name`                                                                         
@@ -98,7 +95,7 @@ class EditGlobalApplicationCommand(HttpReq[ApplicationCommand]):
         default_permission: bool  | None = field(kw_only=True, default=None)
     application_id: InitVar[str]
     command_id: InitVar[str]
-    form: Form | None = None
+    form: EditGlobalApplicationCommand.Form | None = None
 
     method = Http.PATCH
     endpoint: str = field(init=False)
@@ -138,14 +135,13 @@ class BulkOverwriteGlobalApplicationCommands(HttpReq[list[ApplicationCommand]]):
 
 @dataclass
 class GetGuildApplicationCommands(HttpReq[list[ApplicationCommand]]):
-    @dataclass
+    @dataclass(frozen=True)
     class Query(Disc):
-
         # Whether to include full localization dictionaries (`name_localizations` and `description_localizations`) in the returned objects, instead of the `name_localized` and `description_localized` fields. Default `false`.
         with_localizations: bool | None = field(kw_only=True, default=None)
     application_id: InitVar[str]
     guild_id: InitVar[str]
-    query: Query | None = None
+    query: GetGuildApplicationCommands.Query | None = None
 
     method = Http.GET
     endpoint: str = field(init=False)
@@ -158,9 +154,8 @@ class GetGuildApplicationCommands(HttpReq[list[ApplicationCommand]]):
 
 @dataclass
 class CreateGuildApplicationCommand(HttpReq[ApplicationCommand]):
-    @dataclass
+    @dataclass(frozen=True)
     class Form(Disc):
-
         # `Name of command`, 1-32 characters                                   
         name: str
         # Localization dictionary for the `name` field. Values follow the same restrictions as `name`                                                                         
@@ -179,7 +174,7 @@ class CreateGuildApplicationCommand(HttpReq[ApplicationCommand]):
         type:  ApplicationCommandType | None = field(kw_only=True, default=None)
     application_id: InitVar[str]
     guild_id: InitVar[str]
-    form: Form | None = None
+    form: CreateGuildApplicationCommand.Form | None = None
 
     method = Http.POST
     endpoint: str = field(init=False)
@@ -207,9 +202,8 @@ class GetGuildApplicationCommand(HttpReq[ApplicationCommand]):
 
 @dataclass
 class EditGuildApplicationCommand(HttpReq[ApplicationCommand]):
-    @dataclass
+    @dataclass(frozen=True)
     class Form(Disc):
-
         # `Name of command`, 1-32 characters                                   
         name: str | None = field(kw_only=True, default=None)
         # Localization dictionary for the `name` field. Values follow the same restrictions as `name`                                                                         
@@ -227,7 +221,7 @@ class EditGuildApplicationCommand(HttpReq[ApplicationCommand]):
     application_id: InitVar[str]
     guild_id: InitVar[str]
     command_id: InitVar[str]
-    form: Form | None = None
+    form: EditGuildApplicationCommand.Form | None = None
 
     method = Http.PATCH
     endpoint: str = field(init=False)
@@ -255,9 +249,8 @@ class DeleteGuildApplicationCommand(HttpReq[None]):
 
 @dataclass
 class BulkOverwriteGuildApplicationCommands(HttpReq[list[ApplicationCommand]]):
-    @dataclass
+    @dataclass(frozen=True)
     class Form(Disc):
-
         # ID of the command, if known                                                                                                                                         
         id: Snowflake | None = field(kw_only=True, default=None)
         # `Name of command`, 1-32 characters                                   
@@ -280,7 +273,7 @@ class BulkOverwriteGuildApplicationCommands(HttpReq[list[ApplicationCommand]]):
         type:  ApplicationCommandType | None = field(kw_only=True, default=None)
     application_id: InitVar[str]
     guild_id: InitVar[str]
-    form: Form | None = None
+    form: BulkOverwriteGuildApplicationCommands.Form | None = None
 
     method = Http.PUT
     endpoint: str = field(init=False)
@@ -322,15 +315,14 @@ class GetApplicationCommandPermissions(HttpReq[GuildApplicationCommandPermission
 
 @dataclass
 class EditApplicationCommandPermissions(HttpReq[None]):
-    @dataclass
+    @dataclass(frozen=True)
     class Form(Disc):
-
         # Permissions for the command in the guild
         permissions: list[ApplicationCommandPermission]
     application_id: InitVar[str]
     guild_id: InitVar[str]
     command_id: InitVar[str]
-    form: Form | None = None
+    form: EditApplicationCommandPermissions.Form | None = None
 
     method = Http.PUT
     endpoint: str = field(init=False)
@@ -343,8 +335,10 @@ class EditApplicationCommandPermissions(HttpReq[None]):
 
 @dataclass
 class CreateInteractionResponse(HttpReq[None]):
+
     interaction_id: InitVar[str]
     interaction_token: InitVar[str]
+    form: InteractionResponse | None = None
 
     method = Http.POST
     endpoint: str = field(init=False)
@@ -357,9 +351,8 @@ class CreateInteractionResponse(HttpReq[None]):
 
 @dataclass
 class CreateStageInstance(HttpReq[StageInstance]):
-    @dataclass
+    @dataclass(frozen=True)
     class Form(Disc):
-
         # The id of the Stage channel                                                                                                       
         channel_id: Snowflake
         # The topic of the Stage instance (1-120 characters)                                                                                
@@ -368,7 +361,7 @@ class CreateStageInstance(HttpReq[StageInstance]):
         privacy_level: int | None = field(kw_only=True, default=None)
         # Notify @everyone that a Stage instance has started                                                                                
         send_start_notification: bool | None = field(kw_only=True, default=None)
-    form: Form | None = None
+    form: CreateStageInstance.Form | None = None
 
     method = Http.POST
     endpoint = "/stage-instances"
@@ -391,15 +384,14 @@ class GetStageInstance(HttpReq[None]):
 
 @dataclass
 class ModifyStageInstance(HttpReq[StageInstance]):
-    @dataclass
+    @dataclass(frozen=True)
     class Form(Disc):
-
         # The topic of the Stage instance (1-120 characters)                                                           
         topic: str | None = field(kw_only=True, default=None)
         # The `privacy level` of the Stage instance
         privacy_level: int | None = field(kw_only=True, default=None)
     channel_id: InitVar[str]
-    form: Form | None = None
+    form: ModifyStageInstance.Form | None = None
 
     method = Http.PATCH
     endpoint: str = field(init=False)
@@ -452,9 +444,8 @@ class GetAutoModerationRule(HttpReq[AutoModerationRule]):
 
 @dataclass
 class CreateAutoModerationRule(HttpReq[AutoModerationRule]):
-    @dataclass
+    @dataclass(frozen=True)
     class Form(Disc):
-
         # the rule name                                                                                       
         name: str
         # the `event type`           
@@ -472,7 +463,7 @@ class CreateAutoModerationRule(HttpReq[AutoModerationRule]):
         # the channel ids that should not be affected by the rule (Maximum of 50)                             
         exempt_channels: list[Snowflake] | None = field(kw_only=True, default=None)
     guild_id: InitVar[str]
-    form: Form | None = None
+    form: CreateAutoModerationRule.Form | None = None
 
     method = Http.POST
     endpoint: str = field(init=False)
@@ -485,9 +476,8 @@ class CreateAutoModerationRule(HttpReq[AutoModerationRule]):
 
 @dataclass
 class ModifyAutoModerationRule(HttpReq[AutoModerationRule]):
-    @dataclass
+    @dataclass(frozen=True)
     class Form(Disc):
-
         # the rule name                                                                                       
         name: str
         # the `event type`           
@@ -504,7 +494,7 @@ class ModifyAutoModerationRule(HttpReq[AutoModerationRule]):
         exempt_channels: list[Snowflake]
     guild_id: InitVar[str]
     auto_moderation_rule_id: InitVar[str]
-    form: Form | None = None
+    form: ModifyAutoModerationRule.Form | None = None
 
     method = Http.PATCH
     endpoint: str = field(init=False)
@@ -544,16 +534,14 @@ class GetChannel(HttpReq[Channel]):
 
 @dataclass
 class ModifyChannel(HttpReq[Channel]):
-    @dataclass
+    @dataclass(frozen=True)
     class Form_GroupDM(Disc):
-
         # 1-100 character channel name
         name: str
         # base64 encoded icon         
         icon: bytes
-    @dataclass
+    @dataclass(frozen=True)
     class Form_GuildChannel(Disc):
-
         # 1-100 character channel name                                                                                                                                                      
         name: str
         # the `type of channel`; only conversion between text and announcement is supported and only in guilds with the "NEWS" feature
@@ -586,9 +574,8 @@ class ModifyChannel(HttpReq[Channel]):
         default_reaction_emoji: DefaultReaction | None = field(kw_only=True, default=None)
         # the initial `rate_limit_per_user` to set on newly created threads in a channel. this field is copied to the thread at creation time and does not live update.                     
         default_thread_rate_limit_per_user: int | None = field(kw_only=True, default=None)
-    @dataclass
+    @dataclass(frozen=True)
     class Form_Thread(Disc):
-
         # 1-100 character channel name                                                                                                                                                                     
         name: str
         # whether the thread is archived                                                                                                                                                                   
@@ -606,7 +593,7 @@ class ModifyChannel(HttpReq[Channel]):
         # the IDs of the set of tags that have been applied to a thread in a `GUILD_FORUM` channel                                                                                                         
         applied_tags: list[Snowflake] | None = field(kw_only=True, default=None)
     channel_id: InitVar[str]
-    form: Form_GroupDM|Form_GuildChannel|Form_Thread | None = None
+    form: ModifyChannel.Form_GroupDM|ModifyChannel.Form_GuildChannel|ModifyChannel.Form_Thread | None = None
 
     method = Http.PATCH
     endpoint: str = field(init=False)
@@ -632,9 +619,8 @@ class DeleteOrCloseChannel(HttpReq[Channel]):
 
 @dataclass
 class GetChannelMessages(HttpReq[list[Message]]):
-    @dataclass
+    @dataclass(frozen=True)
     class Query(Disc):
-
         # Get messages around this message ID     
         around: Snowflake | None = field(kw_only=True, default=None)
         # Get messages before this message ID     
@@ -644,7 +630,7 @@ class GetChannelMessages(HttpReq[list[Message]]):
         # Max number of messages to return (1-100)
         limit: int | None = field(kw_only=True, default=None)
     channel_id: InitVar[str]
-    query: Query | None = None
+    query: GetChannelMessages.Query | None = None
 
     method = Http.GET
     endpoint: str = field(init=False)
@@ -671,9 +657,8 @@ class GetChannelMessage(HttpReq[Message]):
 
 @dataclass
 class CreateMessage(HttpReq[Message]):
-    @dataclass
+    @dataclass(frozen=True)
     class Form(Disc):
-
         # Message contents (up to 2000 characters)                                                                                                                                   
         content: str | None = field(kw_only=True, default=None)
         # `true` if this is a TTS message                                                                                                                                            
@@ -695,7 +680,7 @@ class CreateMessage(HttpReq[Message]):
         # `Message flags`
         flags: int | None = field(kw_only=True, default=None)
     channel_id: InitVar[str]
-    form: Form | None = None
+    form: CreateMessage.Form | None = None
 
     method = Http.POST
     endpoint: str = field(init=False)
@@ -768,9 +753,8 @@ class DeleteUserReaction(HttpReq[None]):
 
 @dataclass
 class GetReactions(HttpReq[list[User]]):
-    @dataclass
+    @dataclass(frozen=True)
     class Query(Disc):
-
         # Get users after this user ID         
         after: Snowflake | None = field(kw_only=True, default=None)
         # Max number of users to return (1-100)
@@ -778,7 +762,7 @@ class GetReactions(HttpReq[list[User]]):
     channel_id: InitVar[str]
     message_id: InitVar[str]
     emoji: InitVar[str]
-    query: Query | None = None
+    query: GetReactions.Query | None = None
 
     method = Http.GET
     endpoint: str = field(init=False)
@@ -820,26 +804,25 @@ class DeleteAllReactionsForEmoji(HttpReq[None]):
 
 @dataclass
 class EditMessage(HttpReq[Message]):
-    @dataclass
+    @dataclass(frozen=True)
     class Form(Disc):
-
         # Message contents (up to 2000 characters)                                                                                               
-        content: str
+        content: str | None = field(kw_only=True, default=None)
         # Embedded `rich` content (up to 6000 characters)                                                                                        
-        embeds: list[Embed]
+        embeds: list[Embed] | None = field(kw_only=True, default=None)
         # Edit the `flags`
-        flags: int
+        flags: int | None = field(kw_only=True, default=None)
         # Allowed mentions for the message                                                                                                       
-        allowed_mentions: AllowedMentions
+        allowed_mentions: AllowedMentions | None = field(kw_only=True, default=None)
         # Components to include with the message                                                                                                 
-        components: list[MessageComponent]
+        components: list[MessageComponent] | None = field(kw_only=True, default=None)
         # JSON-encoded body of non-file params (multipart/form-data only). See `Uploading Files`                
-        payload_json: str
+        payload_json: str | None = field(kw_only=True, default=None)
         # Attached files to keep and possible descriptions for new files. See `Uploading Files`                 
-        attachments: list[Attachment]
+        attachments: list[Attachment] | None = field(kw_only=True, default=None)
     channel_id: InitVar[str]
     message_id: InitVar[str]
-    form: Form | None = None
+    form: EditMessage.Form | None = None
 
     method = Http.PATCH
     endpoint: str = field(init=False)
@@ -866,13 +849,12 @@ class DeleteMessage(HttpReq[None]):
 
 @dataclass
 class BulkDeleteMessages(HttpReq[None]):
-    @dataclass
+    @dataclass(frozen=True)
     class Form(Disc):
-
         # an array of message ids to delete (2-100)
         messages: list[Snowflake]
     channel_id: InitVar[str]
-    form: Form | None = None
+    form: BulkDeleteMessages.Form | None = None
 
     method = Http.POST
     endpoint: str = field(init=False)
@@ -885,9 +867,8 @@ class BulkDeleteMessages(HttpReq[None]):
 
 @dataclass
 class EditChannelPermissions(HttpReq[None]):
-    @dataclass
+    @dataclass(frozen=True)
     class Form(Disc):
-
         # the bitwise value of all allowed permissions (default `"0"`)   
         allow: str | None = field(kw_only=True, default=None)
         # the bitwise value of all disallowed permissions (default `"0"`)
@@ -896,7 +877,7 @@ class EditChannelPermissions(HttpReq[None]):
         type: int
     channel_id: InitVar[str]
     overwrite_id: InitVar[str]
-    form: Form | None = None
+    form: EditChannelPermissions.Form | None = None
 
     method = Http.PUT
     endpoint: str = field(init=False)
@@ -922,9 +903,8 @@ class GetChannelInvites(HttpReq[list[Invite]]):
 
 @dataclass
 class CreateChannelInvite(HttpReq[Invite]):
-    @dataclass
+    @dataclass(frozen=True)
     class Form(Disc):
-
         # duration of invite in seconds before expiry, or 0 for never. between 0 and 604800 (7 days)                                               
         max_age: int
         # max number of uses or 0 for unlimited. between 0 and 100                                                                                 
@@ -940,7 +920,7 @@ class CreateChannelInvite(HttpReq[Invite]):
         # the id of the embedded application to open for this invite, required if `target_type` is 2, the application must have the `EMBEDDED` flag
         target_application_id: Snowflake
     channel_id: InitVar[str]
-    form: Form | None = None
+    form: CreateChannelInvite.Form | None = None
 
     method = Http.POST
     endpoint: str = field(init=False)
@@ -967,13 +947,12 @@ class DeleteChannelPermission(HttpReq[None]):
 
 @dataclass
 class FollowAnnouncementChannel(HttpReq[FollowedChannel]):
-    @dataclass
+    @dataclass(frozen=True)
     class Form(Disc):
-
         # id of target channel
         webhook_channel_id: Snowflake
     channel_id: InitVar[str]
-    form: Form | None = None
+    form: FollowAnnouncementChannel.Form | None = None
 
     method = Http.POST
     endpoint: str = field(init=False)
@@ -1040,16 +1019,15 @@ class UnpinMessage(HttpReq[None]):
 
 @dataclass
 class GroupDMAddRecipient(HttpReq[None]):
-    @dataclass
+    @dataclass(frozen=True)
     class Form(Disc):
-
         # access token of a user that has granted your app the `gdm.join` scope
         access_token: str
         # nickname of the user being added                                     
         nick: str
     channel_id: InitVar[str]
     user_id: InitVar[str]
-    form: Form | None = None
+    form: GroupDMAddRecipient.Form | None = None
 
     method = Http.PUT
     endpoint: str = field(init=False)
@@ -1076,9 +1054,8 @@ class GroupDMRemoveRecipient(HttpReq[None]):
 
 @dataclass
 class StartThreadFromMessage(HttpReq[Channel]):
-    @dataclass
+    @dataclass(frozen=True)
     class Form(Disc):
-
         # 1-100 character channel name                                                                                                              
         name: str
         # the thread will stop showing in the channel list after `auto_archive_duration` minutes of inactivity, can be set to: 60, 1440, 4320, 10080
@@ -1087,7 +1064,7 @@ class StartThreadFromMessage(HttpReq[Channel]):
         rate_limit_per_user: int | None = field(kw_only=True, default=None)
     channel_id: InitVar[str]
     message_id: InitVar[str]
-    form: Form | None = None
+    form: StartThreadFromMessage.Form | None = None
 
     method = Http.POST
     endpoint: str = field(init=False)
@@ -1100,9 +1077,8 @@ class StartThreadFromMessage(HttpReq[Channel]):
 
 @dataclass
 class StartThreadWithoutMessage(HttpReq[Channel]):
-    @dataclass
+    @dataclass(frozen=True)
     class Form(Disc):
-
         # 1-100 character channel name                                                                                                              
         name: str
         # the thread will stop showing in the channel list after `auto_archive_duration` minutes of inactivity, can be set to: 60, 1440, 4320, 10080
@@ -1114,7 +1090,7 @@ class StartThreadWithoutMessage(HttpReq[Channel]):
         # amount of seconds a user has to wait before sending another message (0-21600)                                                             
         rate_limit_per_user: int | None = field(kw_only=True, default=None)
     channel_id: InitVar[str]
-    form: Form | None = None
+    form: StartThreadWithoutMessage.Form | None = None
 
     method = Http.POST
     endpoint: str = field(init=False)
@@ -1127,9 +1103,8 @@ class StartThreadWithoutMessage(HttpReq[Channel]):
 
 @dataclass
 class StartThreadInForumChannel(HttpReq[Channel]):
-    @dataclass
+    @dataclass(frozen=True)
     class Form(Disc):
-
         # 1-100 character channel name                                                                                       
         name: str
         # duration in minutes to automatically archive the thread after recent activity, can be set to: 60, 1440, 4320, 10080
@@ -1141,7 +1116,7 @@ class StartThreadInForumChannel(HttpReq[Channel]):
         # the IDs of the set of tags that have been applied to a thread in a `GUILD_FORUM` channel                           
         applied_tags: list[Snowflake] | None = field(kw_only=True, default=None)
     channel_id: InitVar[str]
-    form: Form | None = None
+    form: StartThreadInForumChannel.Form | None = None
 
     method = Http.POST
     endpoint: str = field(init=False)
@@ -1233,9 +1208,8 @@ class ListThreadMembers(HttpReq[list[ThreadMember]]):
     def cast(self, data: Any):
         return cast(list[ThreadMember], data)
 
-@dataclass
+@dataclass(frozen=True)
 class Response_ListPublicArchivedThreads(Disc):
-
     # the public, archived threads                                                                
     threads: list[Channel]
     # a thread member object for each returned thread the current user has joined                 
@@ -1244,15 +1218,14 @@ class Response_ListPublicArchivedThreads(Disc):
     has_more: bool
 @dataclass
 class ListPublicArchivedThreads(HttpReq[Response_ListPublicArchivedThreads]):
-    @dataclass
+    @dataclass(frozen=True)
     class Query(Disc):
-
         # returns threads before this timestamp       
         before: str | None = field(kw_only=True, default=None)
         # optional maximum number of threads to return
         limit: int | None = field(kw_only=True, default=None)
     channel_id: InitVar[str]
-    query: Query | None = None
+    query: ListPublicArchivedThreads.Query | None = None
 
     method = Http.GET
     endpoint: str = field(init=False)
@@ -1263,9 +1236,8 @@ class ListPublicArchivedThreads(HttpReq[Response_ListPublicArchivedThreads]):
     def cast(self, data: Any):
         return cast(Response_ListPublicArchivedThreads, data)
 
-@dataclass
+@dataclass(frozen=True)
 class Response_ListPrivateArchivedThreads(Disc):
-
     # the private, archived threads                                                               
     threads: list[Channel]
     # a thread member object for each returned thread the current user has joined                 
@@ -1274,15 +1246,14 @@ class Response_ListPrivateArchivedThreads(Disc):
     has_more: bool
 @dataclass
 class ListPrivateArchivedThreads(HttpReq[Response_ListPrivateArchivedThreads]):
-    @dataclass
+    @dataclass(frozen=True)
     class Query(Disc):
-
         # returns threads before this timestamp       
         before: str | None = field(kw_only=True, default=None)
         # optional maximum number of threads to return
         limit: int | None = field(kw_only=True, default=None)
     channel_id: InitVar[str]
-    query: Query | None = None
+    query: ListPrivateArchivedThreads.Query | None = None
 
     method = Http.GET
     endpoint: str = field(init=False)
@@ -1293,9 +1264,8 @@ class ListPrivateArchivedThreads(HttpReq[Response_ListPrivateArchivedThreads]):
     def cast(self, data: Any):
         return cast(Response_ListPrivateArchivedThreads, data)
 
-@dataclass
+@dataclass(frozen=True)
 class Response_ListJoinedPrivateArchivedThreads(Disc):
-
     # the private, archived threads the current user has joined                                   
     threads: list[Channel]
     # a thread member object for each returned thread the current user has joined                 
@@ -1304,15 +1274,14 @@ class Response_ListJoinedPrivateArchivedThreads(Disc):
     has_more: bool
 @dataclass
 class ListJoinedPrivateArchivedThreads(HttpReq[Response_ListJoinedPrivateArchivedThreads]):
-    @dataclass
+    @dataclass(frozen=True)
     class Query(Disc):
-
         # returns threads before this id              
         before: Snowflake | None = field(kw_only=True, default=None)
         # optional maximum number of threads to return
         limit: int | None = field(kw_only=True, default=None)
     channel_id: InitVar[str]
-    query: Query | None = None
+    query: ListJoinedPrivateArchivedThreads.Query | None = None
 
     method = Http.GET
     endpoint: str = field(init=False)
@@ -1336,9 +1305,8 @@ class GetSticker(HttpReq[Sticker]):
     def cast(self, data: Any):
         return cast(Sticker, data)
 
-@dataclass
+@dataclass(frozen=True)
 class Response_ListNitroStickerPacks(Disc):
-
     # The list of `sticker pack`s returned
     sticker_packs: list[StickerPack]
 @dataclass
@@ -1379,9 +1347,8 @@ class GetGuildSticker(HttpReq[Sticker]):
 
 @dataclass
 class CreateGuildSticker(HttpReq[Sticker]):
-    @dataclass
+    @dataclass(frozen=True)
     class Form(Disc):
-
         # name of the sticker (2-30 characters)                                                       
         name: str
         # description of the sticker (empty or 2-100 characters)                                      
@@ -1391,7 +1358,7 @@ class CreateGuildSticker(HttpReq[Sticker]):
         # the sticker file to upload, must be a PNG, APNG, or Lottie JSON file, max 500 KB            
         file: Any
     guild_id: InitVar[str]
-    form: Form | None = None
+    form: CreateGuildSticker.Form | None = None
 
     method = Http.POST
     endpoint: str = field(init=False)
@@ -1404,9 +1371,8 @@ class CreateGuildSticker(HttpReq[Sticker]):
 
 @dataclass
 class ModifyGuildSticker(HttpReq[Sticker]):
-    @dataclass
+    @dataclass(frozen=True)
     class Form(Disc):
-
         # name of the sticker (2-30 characters)                                                       
         name: str
         # description of the sticker (2-100 characters)                                               
@@ -1415,7 +1381,7 @@ class ModifyGuildSticker(HttpReq[Sticker]):
         tags: str
     guild_id: InitVar[str]
     sticker_id: InitVar[str]
-    form: Form | None = None
+    form: ModifyGuildSticker.Form | None = None
 
     method = Http.PATCH
     endpoint: str = field(init=False)
@@ -1442,13 +1408,12 @@ class DeleteGuildSticker(HttpReq[None]):
 
 @dataclass
 class ListScheduledEventsForGuild(HttpReq[list[GuildScheduledEvent]]):
-    @dataclass
+    @dataclass(frozen=True)
     class Query(Disc):
-
         # include number of users subscribed to each event
         with_user_count: bool | None = field(kw_only=True, default=None)
     guild_id: InitVar[str]
-    query: Query | None = None
+    query: ListScheduledEventsForGuild.Query | None = None
 
     method = Http.GET
     endpoint: str = field(init=False)
@@ -1461,9 +1426,8 @@ class ListScheduledEventsForGuild(HttpReq[list[GuildScheduledEvent]]):
 
 @dataclass
 class CreateGuildScheduledEvent(HttpReq[GuildScheduledEvent]):
-    @dataclass
+    @dataclass(frozen=True)
     class Form(Disc):
-
         # the channel id of the scheduled event.                                                    
         channel_id: Snowflake  | None = field(kw_only=True, default=None)
         # the entity metadata of the scheduled event                                                
@@ -1483,7 +1447,7 @@ class CreateGuildScheduledEvent(HttpReq[GuildScheduledEvent]):
         # the cover image of the scheduled event                                                    
         image: str | None = field(kw_only=True, default=None)
     guild_id: InitVar[str]
-    form: Form | None = None
+    form: CreateGuildScheduledEvent.Form | None = None
 
     method = Http.POST
     endpoint: str = field(init=False)
@@ -1496,14 +1460,13 @@ class CreateGuildScheduledEvent(HttpReq[GuildScheduledEvent]):
 
 @dataclass
 class GetGuildScheduledEvent(HttpReq[GuildScheduledEvent]):
-    @dataclass
+    @dataclass(frozen=True)
     class Query(Disc):
-
         # include number of users subscribed to this event
         with_user_count: bool | None = field(kw_only=True, default=None)
     guild_id: InitVar[str]
     guild_scheduled_event_id: InitVar[str]
-    query: Query | None = None
+    query: GetGuildScheduledEvent.Query | None = None
 
     method = Http.GET
     endpoint: str = field(init=False)
@@ -1516,9 +1479,8 @@ class GetGuildScheduledEvent(HttpReq[GuildScheduledEvent]):
 
 @dataclass
 class ModifyGuildScheduledEvent(HttpReq[GuildScheduledEvent]):
-    @dataclass
+    @dataclass(frozen=True)
     class Form(Disc):
-
         # the channel id of the scheduled event, set to `null` if changing entity type to `EXTERNAL`
         channel_id: Snowflake | None = field(kw_only=True, default=None)
         # the entity metadata of the scheduled event                                                
@@ -1541,7 +1503,7 @@ class ModifyGuildScheduledEvent(HttpReq[GuildScheduledEvent]):
         image: str | None = field(kw_only=True, default=None)
     guild_id: InitVar[str]
     guild_scheduled_event_id: InitVar[str]
-    form: Form | None = None
+    form: ModifyGuildScheduledEvent.Form | None = None
 
     method = Http.PATCH
     endpoint: str = field(init=False)
@@ -1568,9 +1530,8 @@ class DeleteGuildScheduledEvent(HttpReq[None]):
 
 @dataclass
 class GetGuildScheduledEventUsers(HttpReq[list[GuildScheduledEventUser]]):
-    @dataclass
+    @dataclass(frozen=True)
     class Query(Disc):
-
         # number of users to return (up to maximum 100)                                 
         limit: int | None = field(kw_only=True, default=None)
         # include guild member data if it exists                                        
@@ -1581,7 +1542,7 @@ class GetGuildScheduledEventUsers(HttpReq[list[GuildScheduledEventUser]]):
         after: Snowflake | None = field(kw_only=True, default=None)
     guild_id: InitVar[str]
     guild_scheduled_event_id: InitVar[str]
-    query: Query | None = None
+    query: GetGuildScheduledEventUsers.Query | None = None
 
     method = Http.GET
     endpoint: str = field(init=False)
@@ -1594,15 +1555,14 @@ class GetGuildScheduledEventUsers(HttpReq[list[GuildScheduledEventUser]]):
 
 @dataclass
 class CreateWebhook(HttpReq[None]):
-    @dataclass
+    @dataclass(frozen=True)
     class Form(Disc):
-
         # name of the webhook (1-80 characters)
         name: str
         # image for the default webhook avatar 
         avatar: str | None = field(kw_only=True, default=None)
     channel_id: InitVar[str]
-    form: Form | None = None
+    form: CreateWebhook.Form | None = None
 
     method = Http.POST
     endpoint: str = field(init=False)
@@ -1668,9 +1628,8 @@ class GetWebhookWithToken(HttpReq[None]):
 
 @dataclass
 class ModifyWebhook(HttpReq[Webhook]):
-    @dataclass
+    @dataclass(frozen=True)
     class Form(Disc):
-
         # the default name of the webhook                   
         name: str
         # image for the default webhook avatar              
@@ -1678,7 +1637,7 @@ class ModifyWebhook(HttpReq[Webhook]):
         # the new channel id this webhook should be moved to
         channel_id: Snowflake
     webhook_id: InitVar[str]
-    form: Form | None = None
+    form: ModifyWebhook.Form | None = None
 
     method = Http.PATCH
     endpoint: str = field(init=False)
@@ -1732,16 +1691,14 @@ class DeleteWebhookWithToken(HttpReq[None]):
 
 @dataclass
 class ExecuteWebhook(HttpReq[None]):
-    @dataclass
+    @dataclass(frozen=True)
     class Query(Disc):
-
         # waits for server confirmation of message send before response, and returns the created message body (defaults to `false`; when `false` a message that is not saved does not return an error)
         wait: bool
         # Send a message to the specified thread within a webhook's channel. The thread will automatically be unarchived.
         thread_id: Snowflake
-    @dataclass
+    @dataclass(frozen=True)
     class Form(Disc):
-
         # the message contents (up to 2000 characters)                                                                                                                               
         content: str
         # override the default username of the webhook                                                                                                                               
@@ -1766,8 +1723,8 @@ class ExecuteWebhook(HttpReq[None]):
         thread_name: str
     webhook_id: InitVar[str]
     webhook_token: InitVar[str]
-    query: Query | None = None
-    form: Form | None = None
+    query: ExecuteWebhook.Query | None = None
+    form: ExecuteWebhook.Form | None = None
 
     method = Http.POST
     endpoint: str = field(init=False)
@@ -1780,16 +1737,15 @@ class ExecuteWebhook(HttpReq[None]):
 
 @dataclass
 class ExecuteSlackCompatibleWebhook(HttpReq[None]):
-    @dataclass
+    @dataclass(frozen=True)
     class Query(Disc):
-
         # id of the thread to send the message in                                                                                                              
         thread_id: Snowflake
         # waits for server confirmation of message send before response (defaults to `true`; when `false` a message that is not saved does not return an error)
         wait: bool
     webhook_id: InitVar[str]
     webhook_token: InitVar[str]
-    query: Query | None = None
+    query: ExecuteSlackCompatibleWebhook.Query | None = None
 
     method = Http.POST
     endpoint: str = field(init=False)
@@ -1802,16 +1758,15 @@ class ExecuteSlackCompatibleWebhook(HttpReq[None]):
 
 @dataclass
 class ExecuteGitHubCompatibleWebhook(HttpReq[None]):
-    @dataclass
+    @dataclass(frozen=True)
     class Query(Disc):
-
         # id of the thread to send the message in                                                                                                              
         thread_id: Snowflake
         # waits for server confirmation of message send before response (defaults to `true`; when `false` a message that is not saved does not return an error)
         wait: bool
     webhook_id: InitVar[str]
     webhook_token: InitVar[str]
-    query: Query | None = None
+    query: ExecuteGitHubCompatibleWebhook.Query | None = None
 
     method = Http.POST
     endpoint: str = field(init=False)
@@ -1824,15 +1779,14 @@ class ExecuteGitHubCompatibleWebhook(HttpReq[None]):
 
 @dataclass
 class GetWebhookMessage(HttpReq[Message]):
-    @dataclass
+    @dataclass(frozen=True)
     class Query(Disc):
-
         # id of the thread the message is in
         thread_id: Snowflake
     webhook_id: InitVar[str]
     webhook_token: InitVar[str]
     message_id: InitVar[str]
-    query: Query | None = None
+    query: GetWebhookMessage.Query | None = None
 
     method = Http.GET
     endpoint: str = field(init=False)
@@ -1845,31 +1799,29 @@ class GetWebhookMessage(HttpReq[Message]):
 
 @dataclass
 class EditWebhookMessage(HttpReq[Message]):
-    @dataclass
+    @dataclass(frozen=True)
     class Query(Disc):
-
         # id of the thread the message is in
-        thread_id: Snowflake
-    @dataclass
+        thread_id: Snowflake | None = field(kw_only=True, default=None)
+    @dataclass(frozen=True)
     class Form(Disc):
-
         # the message contents (up to 2000 characters)                   
-        content: str
+        content: str | None = field(kw_only=True, default=None)
         # embedded `rich` content                                        
-        embeds: list[Embed]
+        embeds: list[Embed] | None = field(kw_only=True, default=None)
         # allowed mentions for the message                               
-        allowed_mentions: AllowedMentions
+        allowed_mentions: AllowedMentions | None = field(kw_only=True, default=None)
         # the components to include with the message                     
-        components: list[MessageComponent]
+        components: list[MessageComponent] | None = field(kw_only=True, default=None)
         # JSON encoded body of non-file params (multipart/form-data only)
-        payload_json: str
+        payload_json: str | None = field(kw_only=True, default=None)
         # attached files to keep and possible descriptions for new files 
-        attachments: list[Attachment]
+        attachments: list[Attachment] | None = field(kw_only=True, default=None)
     webhook_id: InitVar[str]
     webhook_token: InitVar[str]
     message_id: InitVar[str]
-    query: Query | None = None
-    form: Form | None = None
+    query: EditWebhookMessage.Query | None = None
+    form: EditWebhookMessage.Form | None = None
 
     method = Http.PATCH
     endpoint: str = field(init=False)
@@ -1882,15 +1834,14 @@ class EditWebhookMessage(HttpReq[Message]):
 
 @dataclass
 class DeleteWebhookMessage(HttpReq[None]):
-    @dataclass
+    @dataclass(frozen=True)
     class Query(Disc):
-
         # id of the thread the message is in
         thread_id: Snowflake
     webhook_id: InitVar[str]
     webhook_token: InitVar[str]
     message_id: InitVar[str]
-    query: Query | None = None
+    query: DeleteWebhookMessage.Query | None = None
 
     method = Http.DELETE
     endpoint: str = field(init=False)
@@ -1903,9 +1854,8 @@ class DeleteWebhookMessage(HttpReq[None]):
 
 @dataclass
 class GetInvite(HttpReq[Invite]):
-    @dataclass
+    @dataclass(frozen=True)
     class Query(Disc):
-
         # whether the invite should contain approximate member counts
         with_counts: bool | None = field(kw_only=True, default=None)
         # whether the invite should contain the expiration date      
@@ -1913,7 +1863,7 @@ class GetInvite(HttpReq[Invite]):
         # the guild scheduled event to include with the invite       
         guild_scheduled_event_id: Snowflake | None = field(kw_only=True, default=None)
     invite_code: InitVar[str]
-    query: Query | None = None
+    query: GetInvite.Query | None = None
 
     method = Http.GET
     endpoint: str = field(init=False)
@@ -1961,14 +1911,13 @@ class GetUser(HttpReq[User]):
 
 @dataclass
 class ModifyCurrentUser(HttpReq[User]):
-    @dataclass
+    @dataclass(frozen=True)
     class Form(Disc):
-
         # user's username, if changed may cause the user's discriminator to be randomized.
         username: str
         # if passed, modifies the user's avatar                                           
         avatar: str | None
-    form: Form | None = None
+    form: ModifyCurrentUser.Form | None = None
 
     method = Http.PATCH
     endpoint = "/users/@me"
@@ -2013,12 +1962,11 @@ class LeaveGuild(HttpReq[None]):
 
 @dataclass
 class CreateDM(HttpReq[Channel]):
-    @dataclass
+    @dataclass(frozen=True)
     class Form(Disc):
-
         # the recipient to open a DM channel with
         recipient_id: Snowflake
-    form: Form | None = None
+    form: CreateDM.Form | None = None
 
     method = Http.POST
     endpoint = "/users/@me/channels"
@@ -2028,14 +1976,13 @@ class CreateDM(HttpReq[Channel]):
 
 @dataclass
 class CreateGroupDM(HttpReq[Channel]):
-    @dataclass
+    @dataclass(frozen=True)
     class Form(Disc):
-
         # access tokens of users that have granted your app the `gdm.join` scope
         access_tokens: list[str]
         # a dictionary of user ids to their respective nicknames                
         nicks: dict
-    form: Form | None = None
+    form: CreateGroupDM.Form | None = None
 
     method = Http.POST
     endpoint = "/users/@me/channels"
@@ -2054,9 +2001,8 @@ class GetUserConnections(HttpReq[list[Connection]]):
 
 @dataclass
 class GetGuildAuditLog(HttpReq[AuditLog]):
-    @dataclass
+    @dataclass(frozen=True)
     class Query(Disc):
-
         # Entries from a specific user ID                                                                            
         user_id: Snowflake | None = field(kw_only=True, default=None)
         # Entries for a specific `audit log event`
@@ -2066,7 +2012,7 @@ class GetGuildAuditLog(HttpReq[AuditLog]):
         # Maximum number of entries (between 1-100) to return, defaults to 50                                        
         limit: int | None = field(kw_only=True, default=None)
     guild_id: InitVar[str]
-    query: Query | None = None
+    query: GetGuildAuditLog.Query | None = None
 
     method = Http.GET
     endpoint: str = field(init=False)
@@ -2088,9 +2034,8 @@ class ListVoiceRegions(HttpReq[list[VoiceRegion]]):
 
 @dataclass
 class CreateGuild(HttpReq[Guild]):
-    @dataclass
+    @dataclass(frozen=True)
     class Form(Disc):
-
         # name of the guild (2-100 characters)                                                                       
         name: str
         # `voice region`                                   
@@ -2115,7 +2060,7 @@ class CreateGuild(HttpReq[Guild]):
         system_channel_id: Snowflake | None = field(kw_only=True, default=None)
         # `system channel flags`                            
         system_channel_flags: int | None = field(kw_only=True, default=None)
-    form: Form | None = None
+    form: CreateGuild.Form | None = None
 
     method = Http.POST
     endpoint = "/guilds"
@@ -2125,13 +2070,12 @@ class CreateGuild(HttpReq[Guild]):
 
 @dataclass
 class GetGuild(HttpReq[Guild]):
-    @dataclass
+    @dataclass(frozen=True)
     class Query(Disc):
-
         # when `true`, will return approximate member and presence counts for the guild
         with_counts: bool | None = field(kw_only=True, default=None)
     guild_id: InitVar[str]
-    query: Query | None = None
+    query: GetGuild.Query | None = None
 
     method = Http.GET
     endpoint: str = field(init=False)
@@ -2157,9 +2101,8 @@ class GetGuildPreview(HttpReq[GuildPreview]):
 
 @dataclass
 class ModifyGuild(HttpReq[Guild]):
-    @dataclass
+    @dataclass(frozen=True)
     class Form(Disc):
-
         # guild name                                                                                                                                                       
         name: str
         # guild `voice region`                                                                                  
@@ -2201,7 +2144,7 @@ class ModifyGuild(HttpReq[Guild]):
         # whether the guild's boost progress bar should be enabled                                                                                                         
         premium_progress_bar_enabled: bool
     guild_id: InitVar[str]
-    form: Form | None = None
+    form: ModifyGuild.Form | None = None
 
     method = Http.PATCH
     endpoint: str = field(init=False)
@@ -2240,9 +2183,8 @@ class GetGuildChannels(HttpReq[list[Channel]]):
 
 @dataclass
 class CreateGuildChannel(HttpReq[Channel]):
-    @dataclass
+    @dataclass(frozen=True)
     class Form(Disc):
-
         # channel name (1-100 characters)                                                                                                                                                
         name: str
         # the `type of channel`                                                                                                    
@@ -2270,7 +2212,7 @@ class CreateGuildChannel(HttpReq[Channel]):
         # the default duration that the clients use (not the API) for newly created threads in the channel, in minutes, to automatically archive the thread after recent activity        
         default_auto_archive_duration: int
     guild_id: InitVar[str]
-    form: Form | None = None
+    form: CreateGuildChannel.Form | None = None
 
     method = Http.POST
     endpoint: str = field(init=False)
@@ -2283,9 +2225,8 @@ class CreateGuildChannel(HttpReq[Channel]):
 
 @dataclass
 class ModifyGuildChannelPositions(HttpReq[None]):
-    @dataclass
+    @dataclass(frozen=True)
     class Form(Disc):
-
         # channel id                                                                      
         id: Snowflake
         # sorting position of the channel                                                 
@@ -2295,7 +2236,7 @@ class ModifyGuildChannelPositions(HttpReq[None]):
         # the new parent ID for the channel that is moved                                 
         parent_id: Snowflake | None
     guild_id: InitVar[str]
-    form: Form | None = None
+    form: ModifyGuildChannelPositions.Form | None = None
 
     method = Http.PATCH
     endpoint: str = field(init=False)
@@ -2306,9 +2247,8 @@ class ModifyGuildChannelPositions(HttpReq[None]):
     def cast(self, data: Any):
         return None
 
-@dataclass
+@dataclass(frozen=True)
 class Response_ListActiveGuildThreads(Disc):
-
     # the active threads                                                                          
     threads: list[Channel]
     # a thread member object for each returned thread the current user has joined                 
@@ -2342,15 +2282,14 @@ class GetGuildMember(HttpReq[GuildMember]):
 
 @dataclass
 class ListGuildMembers(HttpReq[list[GuildMember]]):
-    @dataclass
+    @dataclass(frozen=True)
     class Query(Disc):
-
         # max number of members to return (1-1000)
         limit: int
         # the highest user id in the previous page
         after: Snowflake
     guild_id: InitVar[str]
-    query: Query | None = None
+    query: ListGuildMembers.Query | None = None
 
     method = Http.GET
     endpoint: str = field(init=False)
@@ -2363,15 +2302,14 @@ class ListGuildMembers(HttpReq[list[GuildMember]]):
 
 @dataclass
 class SearchGuildMembers(HttpReq[list[GuildMember]]):
-    @dataclass
+    @dataclass(frozen=True)
     class Query(Disc):
-
         # Query string to match username(s) and nickname(s) against.
         query: str
         # max number of members to return (1-1000)                  
         limit: int
     guild_id: InitVar[str]
-    query: Query | None = None
+    query: SearchGuildMembers.Query | None = None
 
     method = Http.GET
     endpoint: str = field(init=False)
@@ -2384,9 +2322,8 @@ class SearchGuildMembers(HttpReq[list[GuildMember]]):
 
 @dataclass
 class AddGuildMember(HttpReq[GuildMember]):
-    @dataclass
+    @dataclass(frozen=True)
     class Form(Disc):
-
         # an oauth2 access token granted with the `guilds.join` to the bot's application for the user you want to add to the guild
         access_token: str
         # value to set user's nickname to                                                                                         
@@ -2399,7 +2336,7 @@ class AddGuildMember(HttpReq[GuildMember]):
         deaf: bool
     guild_id: InitVar[str]
     user_id: InitVar[str]
-    form: Form | None = None
+    form: AddGuildMember.Form | None = None
 
     method = Http.PUT
     endpoint: str = field(init=False)
@@ -2412,24 +2349,23 @@ class AddGuildMember(HttpReq[GuildMember]):
 
 @dataclass
 class ModifyGuildMember(HttpReq[GuildMember]):
-    @dataclass
+    @dataclass(frozen=True)
     class Form(Disc):
-
         # value to set user's nickname to                                                                                                                                                                                                                                                                                                                  
-        nick: str
+        nick: str | None = field(kw_only=True, default=None)
         # array of role ids the member is assigned                                                                                                                                                                                                                                                                                                        
-        roles: list[Snowflake]
+        roles: list[Snowflake] | None = field(kw_only=True, default=None)
         # whether the user is muted in voice channels. Will throw a 400 error if the user is not in a voice channel                                                                                                                                                                                                                                        
-        mute: bool
+        mute: bool | None = field(kw_only=True, default=None)
         # whether the user is deafened in voice channels. Will throw a 400 error if the user is not in a voice channel                                                                                                                                                                                                                                    
-        deaf: bool
+        deaf: bool | None = field(kw_only=True, default=None)
         # id of channel to move user to (if they are connected to voice)                                                                                                                                                                                                                                                                                  
-        channel_id: Snowflake
+        channel_id: Snowflake | None = field(kw_only=True, default=None)
         # when the user's `timeout`, set to null to remove timeout. Will throw a 403 error if the user has the ADMINISTRATOR permission or is the owner of the guild
-        communication_disabled_until: str
+        communication_disabled_until: str | None = field(kw_only=True, default=None)
     guild_id: InitVar[str]
     user_id: InitVar[str]
-    form: Form | None = None
+    form: ModifyGuildMember.Form | None = None
 
     method = Http.PATCH
     endpoint: str = field(init=False)
@@ -2442,13 +2378,12 @@ class ModifyGuildMember(HttpReq[GuildMember]):
 
 @dataclass
 class ModifyCurrentMember(HttpReq[None]):
-    @dataclass
+    @dataclass(frozen=True)
     class Form(Disc):
-
         # value to set user's nickname to
         nick: str | None = field(kw_only=True, default=None)
     guild_id: InitVar[str]
-    form: Form | None = None
+    form: ModifyCurrentMember.Form | None = None
 
     method = Http.PATCH
     endpoint: str = field(init=False)
@@ -2461,13 +2396,12 @@ class ModifyCurrentMember(HttpReq[None]):
 
 @dataclass
 class ModifyCurrentUserNick(HttpReq[None]):
-    @dataclass
+    @dataclass(frozen=True)
     class Form(Disc):
-
         # value to set user's nickname to
         nick: str | None = field(kw_only=True, default=None)
     guild_id: InitVar[str]
-    form: Form | None = None
+    form: ModifyCurrentUserNick.Form | None = None
 
     method = Http.PATCH
     endpoint: str = field(init=False)
@@ -2524,9 +2458,8 @@ class RemoveGuildMember(HttpReq[None]):
 
 @dataclass
 class GetGuildBans(HttpReq[list[Ban]]):
-    @dataclass
+    @dataclass(frozen=True)
     class Query(Disc):
-
         # number of users to return (up to maximum 1000)                                
         limit: int | None = field(kw_only=True, default=None)
         # consider only users before given user id                                      
@@ -2534,7 +2467,7 @@ class GetGuildBans(HttpReq[list[Ban]]):
         # consider only users after given user id                                       
         after: Snowflake | None = field(kw_only=True, default=None)
     guild_id: InitVar[str]
-    query: Query | None = None
+    query: GetGuildBans.Query | None = None
 
     method = Http.GET
     endpoint: str = field(init=False)
@@ -2561,16 +2494,15 @@ class GetGuildBan(HttpReq[Ban]):
 
 @dataclass
 class CreateGuildBan(HttpReq[None]):
-    @dataclass
+    @dataclass(frozen=True)
     class Form(Disc):
-
         # number of days to delete messages for (0-7) (deprecated)               
         delete_message_days: int | None = field(kw_only=True, default=None)
         # number of seconds to delete messages for, between 0 and 604800 (7 days)
         delete_message_seconds: int | None = field(kw_only=True, default=None)
     guild_id: InitVar[str]
     user_id: InitVar[str]
-    form: Form | None = None
+    form: CreateGuildBan.Form | None = None
 
     method = Http.PUT
     endpoint: str = field(init=False)
@@ -2610,9 +2542,8 @@ class GetGuildRoles(HttpReq[list[Role]]):
 
 @dataclass
 class CreateGuildRole(HttpReq[Role]):
-    @dataclass
+    @dataclass(frozen=True)
     class Form(Disc):
-
         # name of the role                                                                                                              
         name: str
         # bitwise value of the enabled/disabled permissions                                                                             
@@ -2628,7 +2559,7 @@ class CreateGuildRole(HttpReq[Role]):
         # whether the role should be mentionable                                                                                        
         mentionable: bool
     guild_id: InitVar[str]
-    form: Form | None = None
+    form: CreateGuildRole.Form | None = None
 
     method = Http.POST
     endpoint: str = field(init=False)
@@ -2641,15 +2572,14 @@ class CreateGuildRole(HttpReq[Role]):
 
 @dataclass
 class ModifyGuildRolePositions(HttpReq[list[Role]]):
-    @dataclass
+    @dataclass(frozen=True)
     class Form(Disc):
-
         # role                        
         id: Snowflake
         # sorting position of the role
         position: int | None = field(kw_only=True, default=None)
     guild_id: InitVar[str]
-    form: Form | None = None
+    form: ModifyGuildRolePositions.Form | None = None
 
     method = Http.PATCH
     endpoint: str = field(init=False)
@@ -2662,26 +2592,25 @@ class ModifyGuildRolePositions(HttpReq[list[Role]]):
 
 @dataclass
 class ModifyGuildRole(HttpReq[Role]):
-    @dataclass
+    @dataclass(frozen=True)
     class Form(Disc):
-
         # name of the role                                                                                                              
-        name: str
+        name: str | None = field(kw_only=True, default=None)
         # bitwise value of the enabled/disabled permissions                                                                             
-        permissions: str
+        permissions: str | None = field(kw_only=True, default=None)
         # RGB color value                                                                                                               
-        color: int
+        color: int | None = field(kw_only=True, default=None)
         # whether the role should be displayed separately in the sidebar                                                                
-        hoist: bool
+        hoist: bool | None = field(kw_only=True, default=None)
         # the role's icon image (if the guild has the `ROLE_ICONS` feature)                                                             
-        icon: str
+        icon: str | None = field(kw_only=True, default=None)
         # the role's unicode emoji as a `standard emoji`
-        unicode_emoji: str
+        unicode_emoji: str | None = field(kw_only=True, default=None)
         # whether the role should be mentionable                                                                                        
-        mentionable: bool
+        mentionable: bool | None = field(kw_only=True, default=None)
     guild_id: InitVar[str]
     role_id: InitVar[str]
-    form: Form | None = None
+    form: ModifyGuildRole.Form | None = None
 
     method = Http.PATCH
     endpoint: str = field(init=False)
@@ -2694,13 +2623,12 @@ class ModifyGuildRole(HttpReq[Role]):
 
 @dataclass
 class ModifyGuildMFALevel(HttpReq[int]):
-    @dataclass
+    @dataclass(frozen=True)
     class Form(Disc):
-
         # `MFA level`                                                                     
         level: int
     guild_id: InitVar[str]
-    form: Form | None = None
+    form: ModifyGuildMFALevel.Form | None = None
 
     method = Http.POST
     endpoint: str = field(init=False)
@@ -2727,15 +2655,14 @@ class DeleteGuildRole(HttpReq[None]):
 
 @dataclass
 class GetGuildPruneCount(HttpReq[Any]):
-    @dataclass
+    @dataclass(frozen=True)
     class Query(Disc):
-
         # number of days to count prune for (1-30)
         days: int
         # role(s) to include                      
         include_roles: list[Snowflake]
     guild_id: InitVar[str]
-    query: Query | None = None
+    query: GetGuildPruneCount.Query | None = None
 
     method = Http.GET
     endpoint: str = field(init=False)
@@ -2748,9 +2675,8 @@ class GetGuildPruneCount(HttpReq[Any]):
 
 @dataclass
 class BeginGuildPrune(HttpReq[Any]):
-    @dataclass
+    @dataclass(frozen=True)
     class Form(Disc):
-
         # number of days to prune (1-30)                            
         days: int
         # whether `pruned` is returned, discouraged for large guilds
@@ -2760,7 +2686,7 @@ class BeginGuildPrune(HttpReq[Any]):
         # reason for the prune (deprecated)                         
         reason: str | None = field(kw_only=True, default=None)
     guild_id: InitVar[str]
-    form: Form | None = None
+    form: BeginGuildPrune.Form | None = None
 
     method = Http.POST
     endpoint: str = field(init=False)
@@ -2878,13 +2804,12 @@ class GetGuildVanityURL(HttpReq[Invite]):
 
 @dataclass
 class GetGuildWidgetImage(HttpReq[Any]):
-    @dataclass
+    @dataclass(frozen=True)
     class Query(Disc):
-
         # style of the widget image returned (see below)
         style: str
     guild_id: InitVar[str]
-    query: Query | None = None
+    query: GetGuildWidgetImage.Query | None = None
 
     method = Http.GET
     endpoint: str = field(init=False)
@@ -2910,9 +2835,8 @@ class GetGuildWelcomeScreen(HttpReq[WelcomeScreen]):
 
 @dataclass
 class ModifyGuildWelcomeScreen(HttpReq[WelcomeScreen]):
-    @dataclass
+    @dataclass(frozen=True)
     class Form(Disc):
-
         # whether the welcome screen is enabled                          
         enabled: bool
         # channels linked in the welcome screen and their display options
@@ -2920,7 +2844,7 @@ class ModifyGuildWelcomeScreen(HttpReq[WelcomeScreen]):
         # the server description to show in the welcome screen           
         description: str
     guild_id: InitVar[str]
-    form: Form | None = None
+    form: ModifyGuildWelcomeScreen.Form | None = None
 
     method = Http.PATCH
     endpoint: str = field(init=False)
@@ -2933,9 +2857,8 @@ class ModifyGuildWelcomeScreen(HttpReq[WelcomeScreen]):
 
 @dataclass
 class ModifyCurrentUserVoiceState(HttpReq[None]):
-    @dataclass
+    @dataclass(frozen=True)
     class Form(Disc):
-
         # the id of the channel the user is currently in
         channel_id: Snowflake | None = field(kw_only=True, default=None)
         # toggles the user's suppress state             
@@ -2943,7 +2866,7 @@ class ModifyCurrentUserVoiceState(HttpReq[None]):
         # sets the user's request to speak              
         request_to_speak_timestamp: str | None = field(kw_only=True, default=None)
     guild_id: InitVar[str]
-    form: Form | None = None
+    form: ModifyCurrentUserVoiceState.Form | None = None
 
     method = Http.PATCH
     endpoint: str = field(init=False)
@@ -2956,16 +2879,15 @@ class ModifyCurrentUserVoiceState(HttpReq[None]):
 
 @dataclass
 class ModifyUserVoiceState(HttpReq[None]):
-    @dataclass
+    @dataclass(frozen=True)
     class Form(Disc):
-
         # the id of the channel the user is currently in
         channel_id: Snowflake
         # toggles the user's suppress state             
         suppress: bool | None = field(kw_only=True, default=None)
     guild_id: InitVar[str]
     user_id: InitVar[str]
-    form: Form | None = None
+    form: ModifyUserVoiceState.Form | None = None
 
     method = Http.PATCH
     endpoint: str = field(init=False)
@@ -2991,15 +2913,14 @@ class GetGuildTemplate(HttpReq[GuildTemplate]):
 
 @dataclass
 class CreateGuildFromGuildTemplate(HttpReq[Guild]):
-    @dataclass
+    @dataclass(frozen=True)
     class Form(Disc):
-
         # name of the guild (2-100 characters)   
         name: str
         # base64 128x128 image for the guild icon
         icon: str | None = field(kw_only=True, default=None)
     template_code: InitVar[str]
-    form: Form | None = None
+    form: CreateGuildFromGuildTemplate.Form | None = None
 
     method = Http.POST
     endpoint: str = field(init=False)
@@ -3025,15 +2946,14 @@ class GetGuildTemplates(HttpReq[list[GuildTemplate]]):
 
 @dataclass
 class CreateGuildTemplate(HttpReq[GuildTemplate]):
-    @dataclass
+    @dataclass(frozen=True)
     class Form(Disc):
-
         # name of the template (1-100 characters)        
         name: str
         # description for the template (0-120 characters)
         description: str | None = field(kw_only=True, default=None)
     guild_id: InitVar[str]
-    form: Form | None = None
+    form: CreateGuildTemplate.Form | None = None
 
     method = Http.POST
     endpoint: str = field(init=False)
@@ -3060,16 +2980,15 @@ class SyncGuildTemplate(HttpReq[GuildTemplate]):
 
 @dataclass
 class ModifyGuildTemplate(HttpReq[GuildTemplate]):
-    @dataclass
+    @dataclass(frozen=True)
     class Form(Disc):
-
         # name of the template (1-100 characters)        
         name: str | None = field(kw_only=True, default=None)
         # description for the template (0-120 characters)
         description: str | None = field(kw_only=True, default=None)
     guild_id: InitVar[str]
     template_code: InitVar[str]
-    form: Form | None = None
+    form: ModifyGuildTemplate.Form | None = None
 
     method = Http.PATCH
     endpoint: str = field(init=False)
@@ -3123,9 +3042,8 @@ class GetGuildEmoji(HttpReq[Emoji]):
 
 @dataclass
 class CreateGuildEmoji(HttpReq[Emoji]):
-    @dataclass
+    @dataclass(frozen=True)
     class Form(Disc):
-
         # name of the emoji                             
         name: str
         # the 128x128 emoji image                       
@@ -3133,7 +3051,7 @@ class CreateGuildEmoji(HttpReq[Emoji]):
         # roles allowed to use this emoji               
         roles: list[Snowflake]
     guild_id: InitVar[str]
-    form: Form | None = None
+    form: CreateGuildEmoji.Form | None = None
 
     method = Http.POST
     endpoint: str = field(init=False)
@@ -3146,16 +3064,15 @@ class CreateGuildEmoji(HttpReq[Emoji]):
 
 @dataclass
 class ModifyGuildEmoji(HttpReq[Emoji]):
-    @dataclass
+    @dataclass(frozen=True)
     class Form(Disc):
-
         # name of the emoji                            
         name: str
         # roles allowed to use this emoji              
         roles: list[Snowflake]
     guild_id: InitVar[str]
     emoji_id: InitVar[str]
-    form: Form | None = None
+    form: ModifyGuildEmoji.Form | None = None
 
     method = Http.PATCH
     endpoint: str = field(init=False)
@@ -3189,9 +3106,8 @@ class GetCurrentBotApplicationInformation(HttpReq[Application]):
     def cast(self, data: Any):
         return cast(Application, data)
 
-@dataclass
+@dataclass(frozen=True)
 class Response_GetCurrentAuthorizationInformation(Disc):
-
     # the current application                                                          
     application: Application
     # the scopes the user has authorized the application for                           

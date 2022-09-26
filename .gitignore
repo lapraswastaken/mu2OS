@@ -1,6 +1,6 @@
 
-discord-api-docs
 **/discordsecrets.py
 **/*.pyc
 dexes
 .venv
+.egg-info

@@ -1,7 +1,5 @@
 
-import re
-from typing import Callable, Mapping
-from parser import do_steps
+from docparse.parser import do_steps
 
 apitype_classname = r"APIType"
 hasendpoint_classname = r"HasEndpoint"
