@@ -157,25 +157,41 @@ def create_enum(m: re.Match[str]):
         typ = "str"
     return f"class {namify(name)}({typ}, Enum):", Enums
 
-@Enums.hook(r"^\| ([\w\.]+?)(?:[\\\* ])+\| (?:(.+?) +\|(?: (.*?) +\|)?)?$")
+@Enums.hook(r"^\| (.+?)(?:[\\\* ])+\| (?:(.+?)(?:[\\\* ])+\|(?: (.*?) +\|)?)?$")
 def format_flag_value(m: re.Match[str]):
     name, value, desc = m.groups()
+    if "--" in name:
+        return ""
 
     if value in (
-        "Type", "Value", "Description", "Name", "ID", "Integer"
+        "Type",
+        "Value",
+        "Description",
+        "Name",
+        "ID",
+        "Integer",
+        "Required Permissions", # case for Guild -> Mutable Guild Features
     ):
         return ""
-        
-    if not re.match(r"^[A-Z_]+$", name) or re.search(r"guild", value):
-        if not desc:
-            if not re.match(r"\d+", value):
-                if value:
-                    desc = value
-                value = f'"{name}"'
-    match = re.search(r"\(([0-9 <]+)\)", value)
-    if match:
-        value, = match.groups()
-    name = re.sub(r"\.", "_", name.upper())
+
+    if not re.match(r"\(\d+ << \d+\)|\d+", value):
+        if re.match(r"^[A-Z_]+$", value): # case for backwards flag definitions (i.e. value in first column)
+            _ = name
+            name = value
+            value = _
+        else:
+            if value and not desc:
+                desc = value
+            value = f'"{name}"'
+
+    match_bitwise_value = re.search(r"\(([\d <]+)\)|(\d+)", value) # case for bitwise flags
+    if match_bitwise_value:
+        value = next(filter(lambda group: group, match_bitwise_value.groups()))
+    name = do_steps(name.upper(), {
+        r" ": "_", # case for Webhook -> Webhook Type
+        r"\.": "_", # case for dotted enums
+        r"\*": "", # case for Guild -> Mutable Guild Features
+    })
     if desc:
         desc = unfuck_desc(desc)
         return f"    # {desc}\n    {name} = {value}"
@@ -345,7 +361,7 @@ from dubious.discord.disc import Disc, Snowflake
 {newline.join([parse(Root, content) for content in inp])}
 
 InteractionData = ApplicationCommandData | MessageComponentData | ModalSubmitData
-InteractionCallbackData = InteractionCallbackMessages | InteractionCallbackAutocomplete | InteractionCallbackModal
+InteractionCallbackData = InteractionCallbackMessage | InteractionCallbackAutocomplete | InteractionCallbackModal
 MessageComponent = ActionRow | Button | SelectMenu | TextInput
 """)
     with open("src/dubious/discord/req.py", "w") as f:

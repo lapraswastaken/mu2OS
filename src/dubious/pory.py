@@ -27,7 +27,7 @@ def do_after(callback: t.Callable[[], None]):
 
 def match_response_type(response: api.InteractionCallbackData | None, ixn_type: api.InteractionType) -> api.InteractionCallbackType:
     match response:
-        case api.InteractionCallbackMessages():
+        case api.InteractionCallbackMessage():
             return api.InteractionCallbackType.CHANNEL_MESSAGE_WITH_SOURCE
         case api.InteractionCallbackModal():
             return api.InteractionCallbackType.MODAL

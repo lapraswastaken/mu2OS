@@ -26,7 +26,7 @@ Pory = pory.Pory(
 @Pory.on_command
 def ping():
     """ Responds with "Pong!" """
-    return api.InteractionCallbackMessages(
+    return api.InteractionCallbackMessage(
         content="Pong!"
     )
 
@@ -60,7 +60,7 @@ def unpause(*, token: str, channel_id: api.Snowflake | None):
 def separator(content: str, patterns: Collection[str], token: str, channel_id: api.Snowflake | None):
 
     if not channel_id:
-        return api.InteractionCallbackMessages(
+        return api.InteractionCallbackMessage(
             content="You can't use this command outside of a guild.",
             flags=api.MessageFlag.EPHEMERAL
         )

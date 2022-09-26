@@ -263,7 +263,7 @@ class InteractionCallbackType(int, Enum):
     MODAL = 9
 
 @dataclass(frozen=True)
-class InteractionCallbackMessages(Disc):
+class InteractionCallbackMessage(Disc):
     # is the response TTS                                                                                                                                                                        
     tts: bool | None = field(kw_only=True, default=None)
     # message content                                                                                                                                                                            
@@ -451,7 +451,7 @@ class TriggerType(int, Enum):
     SPAM = 3
     # check if content contains words from internal pre-defined wordsets   | 1
     KEYWORD_PRESET = 4
-    # check if content contains more mentions than allowed                 | 1
+    # check if content contains more unique mentions than allowed          | 1
     MENTION_SPAM = 5
 
 class KeywordPresetType(int, Enum):
@@ -530,7 +530,7 @@ class Channel(Disc):
     rtc_region: str | None = field(kw_only=True, default=None)
     # the camera `video quality mode` of the voice channel, 1 when not present                                                         
     video_quality_mode: int | None = field(kw_only=True, default=None)
-    # number of messages (not including the initial message or deleted messages) in a thread (if the thread was created before July 1, 2022, it stops counting at 50)                              
+    # number of messages (not including the initial message or deleted messages) in a thread.                                                                                                      
     message_count: int | None = field(kw_only=True, default=None)
     # an approximate count of users in a thread, stops counting at 50                                                                                                                              
     member_count: int | None = field(kw_only=True, default=None)
@@ -554,6 +554,8 @@ class Channel(Disc):
     default_reaction_emoji: DefaultReaction | None = field(kw_only=True, default=None)
     # the initial `rate_limit_per_user` to set on newly created threads in a channel. this field is copied to the thread at creation time and does not live update.                                
     default_thread_rate_limit_per_user: int | None = field(kw_only=True, default=None)
+    # the `default sort order type` used to order posts in `GUILD_FORUM` channels. Defaults to `null`, which indicates a preferred sort order hasn't been set by a channel admin 
+    default_sort_order: int | None = field(kw_only=True, default=None)
 
 class ChannelType(int, Enum):
     # a text channel within a server
@@ -578,14 +580,20 @@ class ChannelType(int, Enum):
     GUILD_STAGE_VOICE = 13
     # the channel in a `hub` containing the listed servers
     GUILD_DIRECTORY = 14
-    # (still in development) a channel that can only contain threads
+    # Channel that can only contain threads
     GUILD_FORUM = 15
 
 class ChannelFlag(int, Enum):
     # this thread is pinned to the top of its parent `GUILD_FORUM` channel
-    PINNED = 1 << 1
+    PINNED = 1
     # whether a tag is required to be specified when creating a thread in a `GUILD_FORUM` channel. Tags are specified in the `applied_tags` field.
-    REQUIRE_TAG = 1 << 4
+    REQUIRE_TAG = 1
+
+class SortOrderType(int, Enum):
+    # Sort forum posts by activity
+    LATEST_ACTIVITY = 0
+    # Sort forum posts by creation time (from most recent to oldest)
+    CREATION_DATE = 1
 
 @dataclass(frozen=True)
 class Message(Disc):
@@ -651,29 +659,53 @@ class Message(Disc):
     position: int | None = field(kw_only=True, default=None)
 
 class MessageType(int, Enum):
+    # true
     DEFAULT = 0
+    # false
     RECIPIENT_ADD = 1
+    # false
     RECIPIENT_REMOVE = 2
+    # false
     CALL = 3
+    # false
     CHANNEL_NAME_CHANGE = 4
+    # false
     CHANNEL_ICON_CHANGE = 5
+    # true
     CHANNEL_PINNED_MESSAGE = 6
+    # true
     USER_JOIN = 7
+    # true
     GUILD_BOOST = 8
+    # true
     GUILD_BOOST_TIER_1 = 9
+    # true
     GUILD_BOOST_TIER_2 = 10
+    # true
     GUILD_BOOST_TIER_3 = 11
+    # true
     CHANNEL_FOLLOW_ADD = 12
+    # false
     GUILD_DISCOVERY_DISQUALIFIED = 14
+    # false
     GUILD_DISCOVERY_REQUALIFIED = 15
+    # false
     GUILD_DISCOVERY_GRACE_PERIOD_INITIAL_WARNING = 16
+    # false
     GUILD_DISCOVERY_GRACE_PERIOD_FINAL_WARNING = 17
+    # true
     THREAD_CREATED = 18
+    # true
     REPLY = 19
+    # true
     CHAT_INPUT_COMMAND = 20
+    # false
     THREAD_STARTER_MESSAGE = 21
+    # true
     GUILD_INVITE_REMINDER = 22
+    # true
     CONTEXT_MENU_COMMAND = 23
+    # true*
     AUTO_MODERATION_ACTION = 24
 
 @dataclass(frozen=True)
@@ -691,23 +723,23 @@ class MessageActivityType(int, Enum):
 
 class MessageFlag(int, Enum):
     # this message has been published to subscribed channels (via Channel Following)
-    CROSSPOSTED = 1 << 0
+    CROSSPOSTED = 1
     # this message originated from a message in another channel (via Channel Following)
-    IS_CROSSPOST = 1 << 1
+    IS_CROSSPOST = 1
     # do not include any embeds when serializing this message
-    SUPPRESS_EMBEDS = 1 << 2
+    SUPPRESS_EMBEDS = 1
     # the source message for this crosspost has been deleted (via Channel Following)
-    SOURCE_MESSAGE_DELETED = 1 << 3
+    SOURCE_MESSAGE_DELETED = 1
     # this message came from the urgent message system
-    URGENT = 1 << 4
+    URGENT = 1
     # this message has an associated thread, with the same id as the message
-    HAS_THREAD = 1 << 5
+    HAS_THREAD = 1
     # this message is only visible to the user who invoked the Interaction
-    EPHEMERAL = 1 << 6
+    EPHEMERAL = 1
     # this message is an Interaction Response and the bot is "thinking"
-    LOADING = 1 << 7
+    LOADING = 1
     # this message failed to mention some roles and add their members to the thread
-    FAILED_TO_MENTION_SOME_ROLES_IN_THREAD = 1 << 8
+    FAILED_TO_MENTION_SOME_ROLES_IN_THREAD = 1
 
 @dataclass(frozen=True)
 class MessageReference(Disc):
@@ -776,7 +808,7 @@ class ThreadMember(Disc):
 @dataclass(frozen=True)
 class DefaultReaction(Disc):
     # the id of a guild's custom emoji  
-    emoji_id: Snowflake
+    emoji_id: Snowflake | None
     # the unicode character of the emoji
     emoji_name: str | None
 
@@ -1121,6 +1153,8 @@ class Webhook(Disc):
 class WebhookType(int, Enum):
     # Incoming Webhooks can post messages to channels with a generated token
     INCOMING = 1
+    # Channel Follower Webhooks are internal webhooks used with Channel Following to post new messages into channels
+    CHANNEL_FOLLOWER = 2
     # Application webhooks are webhooks used with Interactions
     APPLICATION = 3
 
@@ -1224,23 +1258,23 @@ class Application(Disc):
 
 class ApplicationFlag(int, Enum):
     # Intent required for bots in **100 or more servers** to receive ``presence_update` events`
-    GATEWAY_PRESENCE = 1 << 12
+    GATEWAY_PRESENCE = 1
     # Intent required for bots in under 100 servers to receive ``presence_update` events`, found in Bot Settings
-    GATEWAY_PRESENCE_LIMITED = 1 << 13
+    GATEWAY_PRESENCE_LIMITED = 1
     # Intent required for bots in **100 or more servers** to receive member-related events like `guild_member_add`. See list of member-related events `under `GUILD_MEMBERS``
-    GATEWAY_GUILD_MEMBERS = 1 << 14
+    GATEWAY_GUILD_MEMBERS = 1
     # Intent required for bots in under 100 servers to receive member-related events like `guild_member_add`, found in Bot Settings. See list of member-related events `under `GUILD_MEMBERS``
-    GATEWAY_GUILD_MEMBERS_LIMITED = 1 << 15
+    GATEWAY_GUILD_MEMBERS_LIMITED = 1
     # Indicates unusual growth of an app that prevents verification
-    VERIFICATION_PENDING_GUILD_LIMIT = 1 << 16
+    VERIFICATION_PENDING_GUILD_LIMIT = 1
     # Indicates if an app is embedded within the Discord client (currently unavailable publicly)
-    EMBEDDED = 1 << 17
+    EMBEDDED = 1
     # Intent required for bots in **100 or more servers** to receive `message content`
-    GATEWAY_MESSAGE_CONTENT = 1 << 18
+    GATEWAY_MESSAGE_CONTENT = 1
     # Intent required for bots in under 100 servers to receive `message content`, found in Bot Settings
-    GATEWAY_MESSAGE_CONTENT_LIMITED = 1 << 19
+    GATEWAY_MESSAGE_CONTENT_LIMITED = 1
     # Indicates if an app has registered global `application commands`
-    APPLICATION_COMMAND_BADGE = 1 << 23
+    APPLICATION_COMMAND_BADGE = 1
 
 @dataclass(frozen=True)
 class InstallParams(Disc):
@@ -1284,33 +1318,33 @@ class User(Disc):
 
 class UserFlag(int, Enum):
     # Discord Employee
-    STAFF = 1 << 0
+    STAFF = 1
     # Partnered Server Owner
-    PARTNER = 1 << 1
+    PARTNER = 1
     # HypeSquad Events Member
-    HYPESQUAD = 1 << 2
+    HYPESQUAD = 1
     # Bug Hunter Level 1
-    BUG_HUNTER_LEVEL_1 = 1 << 3
+    BUG_HUNTER_LEVEL_1 = 1
     # House Bravery Member
-    HYPESQUAD_ONLINE_HOUSE_1 = 1 << 6
+    HYPESQUAD_ONLINE_HOUSE_1 = 1
     # House Brilliance Member
-    HYPESQUAD_ONLINE_HOUSE_2 = 1 << 7
+    HYPESQUAD_ONLINE_HOUSE_2 = 1
     # House Balance Member
-    HYPESQUAD_ONLINE_HOUSE_3 = 1 << 8
+    HYPESQUAD_ONLINE_HOUSE_3 = 1
     # Early Nitro Supporter
-    PREMIUM_EARLY_SUPPORTER = 1 << 9
+    PREMIUM_EARLY_SUPPORTER = 1
     # User is a `team`
-    TEAM_PSEUDO_USER = 1 << 10
+    TEAM_PSEUDO_USER = 1
     # Bug Hunter Level 2
-    BUG_HUNTER_LEVEL_2 = 1 << 14
+    BUG_HUNTER_LEVEL_2 = 1
     # Verified Bot
-    VERIFIED_BOT = 1 << 16
+    VERIFIED_BOT = 1
     # Early Verified Bot Developer
-    VERIFIED_DEVELOPER = 1 << 17
+    VERIFIED_DEVELOPER = 1
     # Discord Certified Moderator
-    CERTIFIED_MODERATOR = 1 << 18
+    CERTIFIED_MODERATOR = 1
     # Bot uses only `HTTP interactions` and is shown in the online member list
-    BOT_HTTP_INTERACTIONS = 1 << 19
+    BOT_HTTP_INTERACTIONS = 1
 
 class PremiumType(int, Enum):
     NONE = 0
@@ -1335,6 +1369,8 @@ class Connection(Disc):
     friend_sync: bool
     # whether activities related to this connection will be shown in presence updates         
     show_activity: bool
+    # whether this connection has a corresponding third party OAuth2 token                    
+    two_way_link: bool
     # `visibility` of this connection
     visibility: int
 
@@ -1453,7 +1489,7 @@ class AuditLogEventType(int, Enum):
     INTEGRATION_DELETE = 82
     # Stage instance was created (stage channel becomes live)   | `Stage Instance`
     STAGE_INSTANCE_CREATE = 83
-    # Stage instance details were updated                        | `Stage Instance`
+    # Stage instance details were updated                       | `Stage Instance`
     STAGE_INSTANCE_UPDATE = 84
     # Stage instance was deleted (stage channel no longer live) | `Stage Instance`
     STAGE_INSTANCE_DELETE = 85
@@ -1483,13 +1519,21 @@ class AuditLogEventType(int, Enum):
     AUTO_MODERATION_RULE_UPDATE = 141
     # Auto Moderation rule was deleted                          | `Auto Moderation Rule`
     AUTO_MODERATION_RULE_DELETE = 142
-    # Message was blocked by AutoMod (according to a rule)      |
+    # Message was blocked by AutoMod                            |
     AUTO_MODERATION_BLOCK_MESSAGE = 143
+    # Message was flagged by AutoMod                            |
+    AUTO_MODERATION_FLAG_TO_CHANNEL = 144
+    # Member was timed out by AutoMod                           |
+    AUTO_MODERATION_USER_COMMUNICATION_DISABLED = 145
 
 @dataclass(frozen=True)
 class OptionalAuditEntryInfo(Disc):
     # ID of the app whose permissions were targeted                   
     application_id: Snowflake
+    # Name of the Auto Moderation rule that was triggered             
+    auto_moderation_rule_name: str
+    # Trigger type of the Auto Moderation rule that was triggered     
+    auto_moderation_rule_trigger_type: str
     # Channel in which the entities were targeted                     
     channel_id: Snowflake
     # Number of entities that were targeted                           
@@ -1518,31 +1562,31 @@ class AuditLogChange(Disc):
 
 @dataclass(frozen=True)
 class VoiceState(Disc):
-    # the guild id this voice state is for          
+    # the guild id this voice state is for             
     guild_id: Snowflake | None = field(kw_only=True, default=None)
-    # the channel id this user is connected to      
+    # the channel id this user is connected to         
     channel_id: Snowflake | None
-    # the user id this voice state is for           
+    # the user id this voice state is for              
     user_id: Snowflake
-    # the guild member this voice state is for      
+    # the guild member this voice state is for         
     member: GuildMember | None = field(kw_only=True, default=None)
-    # the session id for this voice state           
+    # the session id for this voice state              
     session_id: str
-    # whether this user is deafened by the server   
+    # whether this user is deafened by the server      
     deaf: bool
-    # whether this user is muted by the server      
+    # whether this user is muted by the server         
     mute: bool
-    # whether this user is locally deafened         
+    # whether this user is locally deafened            
     self_deaf: bool
-    # whether this user is locally muted            
+    # whether this user is locally muted               
     self_mute: bool
-    # whether this user is streaming using "Go Live"
+    # whether this user is streaming using "Go Live"   
     self_stream: bool | None = field(kw_only=True, default=None)
-    # whether this user's camera is enabled         
+    # whether this user's camera is enabled            
     self_video: bool
-    # whether this user is muted by the current user
+    # whether this user's permission to speak is denied
     suppress: bool
-    # the time at which the user requested to speak 
+    # the time at which the user requested to speak    
     request_to_speak_timestamp: str | None
 
 @dataclass(frozen=True)
@@ -1582,7 +1626,7 @@ class Guild(Disc):
     region: str | None = field(kw_only=True, default=None)
     # id of afk channel                                                                                                                                                     
     afk_channel_id: Snowflake | None
-    # afk timeout in seconds                                                                                                                                                
+    # afk timeout in seconds, can be set to: 60, 300, 900, 1800, 3600                                                                                                       
     afk_timeout: int
     # true if the server widget is enabled                                                                                                                                  
     widget_enabled: bool | None = field(kw_only=True, default=None)
@@ -1616,7 +1660,7 @@ class Guild(Disc):
     max_members: int | None = field(kw_only=True, default=None)
     # the vanity url code for the guild                                                                                                                                     
     vanity_url_code: str | None
-    # the description of a guild                                                                                                                                  
+    # the description of a guild                                                                                                                                            
     description: str | None
     # `banner hash`                                                                                                                       
     banner: str | None
@@ -1683,13 +1727,13 @@ class GuildNSFWLevel(int, Enum):
 
 class SystemChannelFlag(int, Enum):
     # Suppress member join notifications
-    SUPPRESS_JOIN_NOTIFICATIONS = 1 << 0
+    SUPPRESS_JOIN_NOTIFICATIONS = 1
     # Suppress server boost notifications
-    SUPPRESS_PREMIUM_SUBSCRIPTIONS = 1 << 1
+    SUPPRESS_PREMIUM_SUBSCRIPTIONS = 1
     # Suppress server setup tips
-    SUPPRESS_GUILD_REMINDER_NOTIFICATIONS = 1 << 2
+    SUPPRESS_GUILD_REMINDER_NOTIFICATIONS = 1
     # Hide member join sticker reply buttons
-    SUPPRESS_JOIN_NOTIFICATION_REPLIES = 1 << 3
+    SUPPRESS_JOIN_NOTIFICATION_REPLIES = 1
 
 class GuildFeature(str, Enum):
     # guild has access to set an animated guild banner image
@@ -1736,6 +1780,14 @@ class GuildFeature(str, Enum):
     VIP_REGIONS = "VIP_REGIONS"
     # guild has enabled the welcome screen
     WELCOME_SCREEN_ENABLED = "WELCOME_SCREEN_ENABLED"
+
+class MutableGuildFeature(int, Enum):
+    # Enables Community Features in the guild
+    COMMUNITY = "COMMUNITY"
+    # Pauses all invites/access to the server
+    INVITES_DISABLED = "INVITES_DISABLED"
+    # Enables discovery in the guild, making it publicly listed
+    DISCOVERABLE = "DISCOVERABLE"
 
 @dataclass(frozen=True)
 class GuildPreview(Disc):
@@ -1995,87 +2047,87 @@ class OAuth2Scope(str, Enum):
 
 class BitwisePermissionFlag(int, Enum):
     # Allows creation of instant invites                                                                                                                  | T, V, S
-    CREATE_INSTANT_INVITE = 1 << 0
+    CREATE_INSTANT_INVITE = "CREATE_INSTANT_INVITE"
     # Allows kicking members                                                                                                                              |
-    KICK_MEMBERS = 1 << 1
+    KICK_MEMBERS = "KICK_MEMBERS"
     # Allows banning members                                                                                                                              |
-    BAN_MEMBERS = 1 << 2
+    BAN_MEMBERS = "BAN_MEMBERS"
     # Allows all permissions and bypasses channel permission overwrites                                                                                   |
-    ADMINISTRATOR = 1 << 3
+    ADMINISTRATOR = "ADMINISTRATOR"
     # Allows management and editing of channels                                                                                                           | T, V, S
-    MANAGE_CHANNELS = 1 << 4
+    MANAGE_CHANNELS = "MANAGE_CHANNELS"
     # Allows management and editing of the guild                                                                                                          |
-    MANAGE_GUILD = 1 << 5
+    MANAGE_GUILD = "MANAGE_GUILD"
     # Allows for the addition of reactions to messages                                                                                                    | T, V
-    ADD_REACTIONS = 1 << 6
+    ADD_REACTIONS = "ADD_REACTIONS"
     # Allows for viewing of audit logs                                                                                                                    |
-    VIEW_AUDIT_LOG = 1 << 7
+    VIEW_AUDIT_LOG = "VIEW_AUDIT_LOG"
     # Allows for using priority speaker in a voice channel                                                                                                | V
-    PRIORITY_SPEAKER = 1 << 8
+    PRIORITY_SPEAKER = "PRIORITY_SPEAKER"
     # Allows the user to go live                                                                                                                          | V
-    STREAM = 1 << 9
+    STREAM = "STREAM"
     # Allows guild members to view a channel, which includes reading messages in text channels and joining voice channels                                 | T, V, S
-    VIEW_CHANNEL = 1 << 10
+    VIEW_CHANNEL = "VIEW_CHANNEL"
     # Allows for sending messages in a channel and creating threads in a forum (does not allow sending messages in threads)                               | T, V
-    SEND_MESSAGES = 1 << 11
+    SEND_MESSAGES = "SEND_MESSAGES"
     # Allows for sending of `/tts` messages                                                                                                               | T, V
-    SEND_TTS_MESSAGES = 1 << 12
+    SEND_TTS_MESSAGES = "SEND_TTS_MESSAGES"
     # Allows for deletion of other users messages                                                                                                         | T, V
-    MANAGE_MESSAGES = 1 << 13
+    MANAGE_MESSAGES = "MANAGE_MESSAGES"
     # Links sent by users with this permission will be auto-embedded                                                                                      | T, V
-    EMBED_LINKS = 1 << 14
+    EMBED_LINKS = "EMBED_LINKS"
     # Allows for uploading images and files                                                                                                               | T, V
-    ATTACH_FILES = 1 << 15
+    ATTACH_FILES = "ATTACH_FILES"
     # Allows for reading of message history                                                                                                               | T, V
-    READ_MESSAGE_HISTORY = 1 << 16
+    READ_MESSAGE_HISTORY = "READ_MESSAGE_HISTORY"
     # Allows for using the `@everyone` tag to notify all users in a channel, and the `@here` tag to notify all online users in a channel                  | T, V, S
-    MENTION_EVERYONE = 1 << 17
+    MENTION_EVERYONE = "MENTION_EVERYONE"
     # Allows the usage of custom emojis from other servers                                                                                                | T, V
-    USE_EXTERNAL_EMOJIS = 1 << 18
+    USE_EXTERNAL_EMOJIS = "USE_EXTERNAL_EMOJIS"
     # Allows for viewing guild insights                                                                                                                   |
-    VIEW_GUILD_INSIGHTS = 1 << 19
+    VIEW_GUILD_INSIGHTS = "VIEW_GUILD_INSIGHTS"
     # Allows for joining of a voice channel                                                                                                               | V, S
-    CONNECT = 1 << 20
+    CONNECT = "CONNECT"
     # Allows for speaking in a voice channel                                                                                                              | V
-    SPEAK = 1 << 21
+    SPEAK = "SPEAK"
     # Allows for muting members in a voice channel                                                                                                        | V, S
-    MUTE_MEMBERS = 1 << 22
+    MUTE_MEMBERS = "MUTE_MEMBERS"
     # Allows for deafening of members in a voice channel                                                                                                  | V, S
-    DEAFEN_MEMBERS = 1 << 23
+    DEAFEN_MEMBERS = "DEAFEN_MEMBERS"
     # Allows for moving of members between voice channels                                                                                                 | V, S
-    MOVE_MEMBERS = 1 << 24
+    MOVE_MEMBERS = "MOVE_MEMBERS"
     # Allows for using voice-activity-detection in a voice channel                                                                                        | V
-    USE_VAD = 1 << 25
+    USE_VAD = "USE_VAD"
     # Allows for modification of own nickname                                                                                                             |
-    CHANGE_NICKNAME = 1 << 26
+    CHANGE_NICKNAME = "CHANGE_NICKNAME"
     # Allows for modification of other users nicknames                                                                                                    |
-    MANAGE_NICKNAMES = 1 << 27
+    MANAGE_NICKNAMES = "MANAGE_NICKNAMES"
     # Allows management and editing of roles                                                                                                              | T, V, S
-    MANAGE_ROLES = 1 << 28
+    MANAGE_ROLES = "MANAGE_ROLES"
     # Allows management and editing of webhooks                                                                                                           | T, V
-    MANAGE_WEBHOOKS = 1 << 29
+    MANAGE_WEBHOOKS = "MANAGE_WEBHOOKS"
     # Allows management and editing of emojis and stickers                                                                                                |
-    MANAGE_EMOJIS_AND_STICKERS = 1 << 30
+    MANAGE_EMOJIS_AND_STICKERS = "MANAGE_EMOJIS_AND_STICKERS"
     # Allows members to use application commands, including slash commands and context menu commands.                                                     | T, V
-    USE_APPLICATION_COMMANDS = 1 << 31
+    USE_APPLICATION_COMMANDS = "USE_APPLICATION_COMMANDS"
     # Allows for requesting to speak in stage channels. (_This permission is under active development and may be changed or removed._)                    | S
-    REQUEST_TO_SPEAK = 1 << 32
+    REQUEST_TO_SPEAK = "REQUEST_TO_SPEAK"
     # Allows for creating, editing, and deleting scheduled events                                                                                         | V, S
-    MANAGE_EVENTS = 1 << 33
+    MANAGE_EVENTS = "MANAGE_EVENTS"
     # Allows for deleting and archiving threads, and viewing all private threads                                                                          | T
-    MANAGE_THREADS = 1 << 34
+    MANAGE_THREADS = "MANAGE_THREADS"
     # Allows for creating public and announcement threads                                                                                                 | T
-    CREATE_PUBLIC_THREADS = 1 << 35
+    CREATE_PUBLIC_THREADS = "CREATE_PUBLIC_THREADS"
     # Allows for creating private threads                                                                                                                 | T
-    CREATE_PRIVATE_THREADS = 1 << 36
+    CREATE_PRIVATE_THREADS = "CREATE_PRIVATE_THREADS"
     # Allows the usage of custom stickers from other servers                                                                                              | T, V
-    USE_EXTERNAL_STICKERS = 1 << 37
+    USE_EXTERNAL_STICKERS = "USE_EXTERNAL_STICKERS"
     # Allows for sending messages in threads                                                                                                              | T
-    SEND_MESSAGES_IN_THREADS = 1 << 38
+    SEND_MESSAGES_IN_THREADS = "SEND_MESSAGES_IN_THREADS"
     # Allows for using Activities (applications with the `EMBEDDED` flag) in a voice channel                                                              | V
-    USE_EMBEDDED_ACTIVITIES = 1 << 39
+    USE_EMBEDDED_ACTIVITIES = "USE_EMBEDDED_ACTIVITIES"
     # Allows for timing out users to prevent them from sending or reacting to messages in chat and threads, and from speaking in voice and stage channels |
-    MODERATE_MEMBERS = 1 << 40
+    MODERATE_MEMBERS = "MODERATE_MEMBERS"
 
 @dataclass(frozen=True)
 class Role(Disc):
@@ -2143,5 +2195,5 @@ class MembershipStateType(int, Enum):
 
 
 InteractionData = ApplicationCommandData | MessageComponentData | ModalSubmitData
-InteractionCallbackData = InteractionCallbackMessages | InteractionCallbackAutocomplete | InteractionCallbackModal
+InteractionCallbackData = InteractionCallbackMessage | InteractionCallbackAutocomplete | InteractionCallbackModal
 MessageComponent = ActionRow | Button | SelectMenu | TextInput

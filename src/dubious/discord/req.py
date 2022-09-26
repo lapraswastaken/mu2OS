@@ -568,12 +568,16 @@ class ModifyChannel(HttpReq[Channel]):
         video_quality_mode: int | None
         # the default duration that the clients use (not the API) for newly created threads in the channel, in minutes, to automatically archive the thread after recent activity           
         default_auto_archive_duration: int | None
+        # `channel flags` is supported.                                           
+        flags: int | None = field(kw_only=True, default=None)
         # the set of tags that can be used in a `GUILD_FORUM` channel                                                                                                                       
         available_tags: list[ForumTag] | None = field(kw_only=True, default=None)
         # the emoji to show in the add reaction button on a thread in a `GUILD_FORUM` channel                                                                                               
         default_reaction_emoji: DefaultReaction | None = field(kw_only=True, default=None)
         # the initial `rate_limit_per_user` to set on newly created threads in a channel. this field is copied to the thread at creation time and does not live update.                     
         default_thread_rate_limit_per_user: int | None = field(kw_only=True, default=None)
+        # the `default sort order type` used to order posts in `GUILD_FORUM` channels                                              
+        default_sort_order: int | None = field(kw_only=True, default=None)
     @dataclass(frozen=True)
     class Form_Thread(Disc):
         # 1-100 character channel name                                                                                                                                                                     
@@ -661,6 +665,8 @@ class CreateMessage(HttpReq[Message]):
     class Form(Disc):
         # Message contents (up to 2000 characters)                                                                                                                                   
         content: str | None = field(kw_only=True, default=None)
+        # Can be used to verify a message was sent (up to 25 characters). Value will appear in the `Message Create event`.               
+        nonce: int | str | None = field(kw_only=True, default=None)
         # `true` if this is a TTS message                                                                                                                                            
         tts: bool | None = field(kw_only=True, default=None)
         # Embedded `rich` content (up to 6000 characters)                                                                                                                            
@@ -2054,7 +2060,7 @@ class CreateGuild(HttpReq[Guild]):
         channels: list[Channel] | None = field(kw_only=True, default=None)
         # id for afk channel                                                                                         
         afk_channel_id: Snowflake | None = field(kw_only=True, default=None)
-        # afk timeout in seconds                                                                                     
+        # afk timeout in seconds, can be set to: 60, 300, 900, 1800, 3600                                           
         afk_timeout: int | None = field(kw_only=True, default=None)
         # the id of the channel where guild notices such as welcome messages and boost events are posted             
         system_channel_id: Snowflake | None = field(kw_only=True, default=None)
@@ -2115,7 +2121,7 @@ class ModifyGuild(HttpReq[Guild]):
         explicit_content_filter: int | None
         # id for afk channel                                                                                                                                               
         afk_channel_id: Snowflake | None
-        # afk timeout in seconds                                                                                                                                           
+        # afk timeout in seconds, can be set to: 60, 300, 900, 1800, 3600                                                                                                 
         afk_timeout: int
         # base64 1024x1024 png/jpeg/gif image for the guild icon (can be animated gif when the server has the `ANIMATED_ICON` feature)                                     
         icon: str | None
@@ -2211,6 +2217,12 @@ class CreateGuildChannel(HttpReq[Channel]):
         video_quality_mode: int
         # the default duration that the clients use (not the API) for newly created threads in the channel, in minutes, to automatically archive the thread after recent activity        
         default_auto_archive_duration: int
+        # emoji to show in the add reaction button on a thread in a `GUILD_FORUM` channel                                                                                                
+        default_reaction_emoji: DefaultReaction
+        # set of tags that can be used in a `GUILD_FORUM` channel                                                                                                                        
+        available_tags: list[ForumTag]
+        # the `default sort order type` used to order posts in `GUILD_FORUM` channels                                           
+        default_sort_order: int
     guild_id: InitVar[str]
     form: CreateGuildChannel.Form | None = None
 
