@@ -1,21 +1,16 @@
 
 from __future__ import annotations
-from abc import ABC, abstractmethod
 
+import abc
 import dataclasses as dc
+import enum
 import math
-from pprint import pprint
-import re
-from time import sleep
 import time
-import traceback
-from types import UnionType
-from typing import Any, Callable, Generic, TypeVar, ClassVar, get_args, get_origin, get_type_hints
-from enum import Enum
-from typing_extensions import TypeVarTuple
+import types
+import typing as t
 
 from requests import request
-import requests
+
 
 class Snowflake(str):
     def __init__(self, r: str|int):
@@ -45,33 +40,34 @@ class Snowflake(str):
     def __ne__(self, o: object) -> bool:
         return not self == o
 
-@dc.dataclass(frozen=True)
+@dc.dataclass
 class Disc:
     """ Root class for all Discord objects. """
 
-t_Cast = TypeVar("t_Cast")
-def cast(t_to: type[t_Cast], raw: Any, debug: Callable[..., None] = lambda *_, **__: None) -> t_Cast:
+t_Cast = t.TypeVar("t_Cast")
+def cast(t_to: type[t_Cast], raw: t.Any, debug: t.Callable[..., None] = lambda *_, **__: None) -> t_Cast:
     debug(t_to)
     debug(raw)
     if raw is None: return raw
+    if dc.is_dataclass(raw): raw = dc.asdict(raw)
 
-    t_root = get_origin(t_to)
+    t_root = t.get_origin(t_to)
 
     if t_root:
         if issubclass(t_root, list):
-            t_list, *_ = get_args(t_to)
+            t_list, *_ = t.get_args(t_to)
             return [
                 cast(t_list, rawitem) for rawitem in raw
             ] # type: ignore
         elif issubclass(t_root, dict):
-            t_key, t_val, *_ = get_args(t_to)
+            t_key, t_val, *_ = t.get_args(t_to)
             return {
                 cast(t_key, key): cast(t_val, val)
                     for key, val in raw.items()
             } # type: ignore
-        elif issubclass(t_root, UnionType):
+        elif issubclass(t_root, types.UnionType):
             t_optionals = [
-                t for t in get_args(t_to)
+                t for t in t.get_args(t_to)
                     if t != type(None)
             ]
             best_score = 0
@@ -100,7 +96,7 @@ def cast(t_to: type[t_Cast], raw: Any, debug: Callable[..., None] = lambda *_, *
     if issubclass(t_to, Disc):
         fixedraw = {}
 
-        fieldtypes: dict[str, type] = get_type_hints(t_to)
+        fieldtypes: dict[str, type] = t.get_type_hints(t_to)
         fixedraw = {
             field.name: cast(
                 fieldtypes[field.name], raw[field.name] if field.name in raw else None
@@ -108,27 +104,30 @@ def cast(t_to: type[t_Cast], raw: Any, debug: Callable[..., None] = lambda *_, *
         }
         return t_to(**fixedraw)
     else:
-        return raw
+        try:
+            return t_to(raw)
+        except ValueError:
+            return raw
 
 ROOT = "https://discord.com/api"
 
-class Http(str, Enum):
+class Http(str, enum.Enum):
     GET = "GET"
     PUT = "PUT"
     PATCH = "PATCH"
     POST = "POST"
     DELETE = "DELETE"
 
-t_Ret = TypeVar("t_Ret")
-class HttpReq(ABC, Generic[t_Ret]):
+t_Ret = t.TypeVar("t_Ret")
+class HttpReq(abc.ABC, t.Generic[t_Ret]):
     query: Disc | None = None
     form: Disc | None = None
 
     method: Http
     endpoint: str
 
-    @abstractmethod
-    def cast(self, data: Any) -> t_Ret:
+    @abc.abstractmethod
+    def cast(self, data: t.Any) -> t_Ret:
         ...
 
     def do_with(self, token: str) -> t_Ret:
@@ -143,7 +142,7 @@ class HttpReq(ABC, Generic[t_Ret]):
             error = res.json()
             if error.get("retry_after"):
                 print(f"rate limited, waiting {error['retry_after']/1000} seconds")
-                sleep(error["retry_after"]/1000)
+                time.sleep(error["retry_after"]/1000)
                 return self.do_with(token)
             raise Exception(f"{res.status_code}: {str(error)}")
         return self.cast(res.json() if res.text else None)

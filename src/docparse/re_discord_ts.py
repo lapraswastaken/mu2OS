@@ -1,4 +1,5 @@
 
+from ast import arg
 from dataclasses import dataclass, field
 import os
 import re
@@ -19,36 +20,36 @@ def namify(match: str):
 def prepend_lines(prep: str, lines: str):
     return "\n".join([f"{prep}{line}" for line in lines.split("\n") if line])
 
-class AppendNewlineParser(Parser):
+class AppendBracketParser(Parser):
     def out(self, parser: Parser):
-        return ""
+        return "}"
 
-Disc = Root.copyto(AppendNewlineParser)
+Disc = Root.copyto(AppendBracketParser)
 
 @Root.hook(r"###### (.+?) Structure")
 def create_disc_class(m: re.Match[str]):
     name, = m.groups()
-    return f"@dataclass\nclass {namify(name)}(Disc):", Disc
+    return f"interface {namify(name)} "+"{", Disc
 
 def unfuck_type(typ: str):
     return do_steps(typ, {
         r"\[(.+?)\].*": lambda match: (
             namify(match.group(1))
         ),
-        r"string": "str",
-        r"integer": "int",
-        r"number": "int",
-        r"double": "float",
-        r"boolean": "bool",
+        #r"string": "str",
+        r"integer": "number",
+        #r"number": "int",
+        r"double": "number",
+        #r"boolean": "bool",
         r"snowflake": "Snowflake",
-        r"ISO8601 timestamp": "str",
-        r"file contents": "Any",
+        r"ISO8601 timestamp": "string",
+        r"file contents": "any",
 
         r"`?20\d`? and an? ": "",
         r"`?20\d`? \w+ with ": "",
-        r".+No Content.+": "None",
-        r".+on success.*": "None",
-        r".+[E|e]mpty [R|r]esponse.*": "None",
+        r".+No Content.+": "void",
+        r".+on success.*": "void",
+        r".+[E|e]mpty [R|r]esponse.*": "void",
 
         r"\(default.*\)": "",
         r",(?: or)?": " |",
@@ -63,21 +64,21 @@ def unfuck_type(typ: str):
         r"up to \d+ ": "",
         
         r".*?(?:[a|A]rray|[l|L]ist) of (.+)": lambda match: (
-            f"list[{make_singular(match.group(1))}]"
+            f"{make_singular(match.group(1))}[]"
         ),
         r".*?[m|M]ap of (.+) to (.+)": lambda match: (
-            f"dict[{make_singular(match.group(1))}, {make_singular(match.group(2))}]"
+            "{"+f"{make_singular(match.group(1))}: {make_singular(match.group(2))}"+"}"
         ),
 
-        r"^\?(.+)": r"\1 | None",
-        r"(.+)\?$": r"\1 | None",
+        r"^\?(.+)": r"\1?",
+        #r"(.+)\?$": r"\1 | None",
         r" for (.+?) options": "",
-        r"dictionary with keys in AvailableLocales": r"dict[str, str]",
-        r"^mixed.*": "Any",
-        r"binary": "bytes",
+        r"dictionary with keys in AvailableLocales": r"{string: string}",
+        r"^mixed.*": "any",
+        r"binary": "any",
         r"thread-specific ": "",
         r"\(can be null only in reaction emoji objects\)": "",
-        r"two ints \(shard_id \| num_shards\)": "tuple[int, int]",
+        r"two ints \(shard_id \| num_shards\)": "[number, number]",
         r"Unsigned ": "",
         r" \(big endian\)": "",
         r"(?:Message)?Component": "MessageComponent",
@@ -92,13 +93,13 @@ def unfuck_type(typ: str):
         r"guild Webhook": "Webhook",
         r"(?:guild |DM)Channel": "Channel",
         r"all of the guild's ": "",
-        r"object with .+": "Any",
-        r"PNG image widget for the guild": "Any",
+        r"object with .+": "any",
+        r"PNG image widget for the guild": "any",
         r"GuildApplicationCommandPermission\b": "GuildApplicationCommandPermissions",
         r"Object$": "",
         r"AllowedMention\b": "AllowedMentions",
-        r"\bImageData\b": "str",
-        r"\bLevel\b": "int",
+        r"\bImageData\b": "string",
+        r"\bLevel\b": "number",
         r"\bWidget\b": "GuildWidget",
         r"\bGuildMembershipStateType\b": "MembershipStateType",
     })
@@ -114,25 +115,24 @@ def format_field(m: re.Match[str]):
     name, typ, desc = m.groups()
     if name == "Field": return ""
 
-    if name == "global": name = "_global"
-
     typ = unfuck_type(typ)
 
     desc = unfuck_desc(desc)
 
     if name.endswith("?"):
-        if not typ.endswith(" | None"):
-            typ += " | None"
-        typ += " = field(kw_only=True, default=None)"
+        if not typ.endswith("?"):
+            typ += "?"
+        #typ += " = field(kw_only=True, default=None)"
         name = name[:-1]
     
     match = re.search(r"`(\d+)`", desc)
-    if match and "int" in typ and not re.search(r"min|max|version", name):
-        typ += f" = field(kw_only=True, default={match.group(1)})"
+    if match and "number" in typ and not re.search(r"min|max|version", name):
+        #typ += f" = field(kw_only=True, default={match.group(1)})"
+        typ += f" = {match.group(1)}"
 
-    return f"    # {desc}\n    {name}: {typ}"
+    return f"    // {desc}\n    {name}: {typ}"
 
-Enums = Root.copyto(AppendNewlineParser)
+Enums = Root.copyto(AppendBracketParser)
 
 @Root.hook(r"###### (.+? Flag)s?$")
 @Root.hook(r"###### (.+? Type)s?$")
@@ -146,16 +146,16 @@ def create_enum(m: re.Match[str]):
     name, = m.groups()
     if re.search(r"\bBy\b", name):
         return ""
-    typ = "int"
-    if name in [
-        "Embed Type",
-        "Allowed Mention Type",
-        "Guild Feature",
-        "OAuth2 Scope",
-        "Mutable Guild Feature"
-    ]:
-        typ = "str"
-    return f"class {namify(name)}({typ}, Enum):", Enums
+    # typ = "int"
+    # if name in [
+    #     "Embed Type",
+    #     "Allowed Mention Type",
+    #     "Guild Feature",
+    #     "OAuth2 Scope",
+    #     "Mutable Guild Feature"
+    # ]:
+    #     typ = "str"
+    return f"enum {namify(name)} "+"{", Enums
 
 @Enums.hook(r"^\| (.+?)(?:[\\\* ])+\| (?:(.+?)(?:[\\\* ])+\|(?: (.*?) +\|)?)?$")
 def format_flag_value(m: re.Match[str]):
@@ -194,16 +194,16 @@ def format_flag_value(m: re.Match[str]):
     })
     if desc:
         desc = unfuck_desc(desc)
-        return f"    # {desc}\n    {name} = {value}"
+        return f"    // {desc}\n    {name} = {value},"
     else:
-        return f"    {name} = {value}"
+        return f"    {name} = {value},"
 
 @dataclass
 class HttpReqData:
     name: str
     type_req: str
     endpoint: str
-    type_ret = "None"
+    type_ret = "void"
     type_query: list[str] = field(init=False, default_factory=list)
     type_form: list[str] = field(init=False, default_factory=list)
 
@@ -214,17 +214,18 @@ class HttpReqData:
     def format(self):
         ep_parts = [arg for arg in self.endpoint.split("/") if arg]
         ep_args = [arg[1:] for arg in ep_parts if arg.startswith("!")]
-        endpointargsstr = f", {', '.join([f'{arg}: str' for arg in ep_args])}" if ep_args else ""
+        endpointargsstr = f", {', '.join([f'{arg}: string' for arg in ep_args])}" if ep_args else ""
         endpointformat = "\"/" + f"/".join(arg if not arg.startswith("!") else "{"+arg[1:]+"}" for arg in ep_parts) + "\""
         return (
             ((f"\n".join(self.response) + "\n") if self.response else "") +
-            f"@dataclass\n"
-            f"class {self.name}(HttpReq[{self.type_ret}]):\n" +
+            #f"@dataclass\n"
+            f"interface {self.name} extends HttpReq<{self.type_ret}> " + "{\n" +
             "\n".join(line for line in self.inner if line) + (
             "\n" if self.type_ret.endswith("Response") or self.type_query or self.type_form else "") +
-            "\n".join([f"    {arg}: InitVar[str]" for arg in ep_args]) + ("\n" if ep_args else "") + (
-            f"    query: {'|'.join(self.type_query)} | None = None\n" if self.type_query else '') + (
-            f"    form: {'|'.join(self.type_form)} | None = None\n" if self.type_form else '') + "\n"
+            #"\n".join([f"    {arg}: InitVar[str]" for arg in ep_args]) + ("\n" if ep_args else "") +
+            (f"    query: {'|'.join(self.type_query)}?\n" if self.type_query else '') +
+            (f"    form: {'|'.join(self.type_form)}?\n" if self.type_form else '') +
+            f"\n"
             f"    method = Http.{self.type_req}\n"
             f"    endpoint"+(f" = {endpointformat}" if not ep_args else (": str = field(init=False)" + "\n\n"
             f"    def __post_init__(self{endpointargsstr}):\n"
@@ -349,29 +350,13 @@ if __name__ == "__main__":
     newline = "\n"
 
     api = f"""
-from __future__ import annotations
-
-from dataclasses import dataclass, field
-from enum import Enum
-from typing import Any
-
-from dubious.discord.disc import Disc, Snowflake
-
 {newline.join([parse(Root, content) for content in inp])}
 
-InteractionData = ApplicationCommandData | MessageComponentData | ModalSubmitData
-InteractionCallbackData = InteractionCallbackMessage | InteractionCallbackAutocomplete | InteractionCallbackModal
-MessageComponent = ActionRow | Button | SelectMenu | TextInput
+type InteractionData = ApplicationCommandData | MessageComponentData | ModalSubmitData
+type InteractionCallbackData = InteractionCallbackMessage | InteractionCallbackAutocomplete | InteractionCallbackModal
+type MessageComponent = ActionRow | Button | SelectMenu | TextInput
 """
     req = f"""
-from __future__ import annotations
-
-from dataclasses import InitVar, dataclass, field
-from typing import Any
-
-from dubious.discord.disc import Disc, Http, HttpReq, Snowflake, cast
-from dubious.discord.api import *
-
 {(newline+newline).join([req.format() for req in Http.complete])}
 """
 
@@ -381,7 +366,7 @@ from dubious.discord.api import *
         r"\bInteractionCallbackAutocomplete\b": "ResponseAutocomplete",
         r"\bInteractionCallbackModal\b": "ResponseModal",
     }) for content in [req, api]]
-    with open("src/dubious/discord/api.py", "w") as f:
+    with open("api.ts", "w") as f:
         f.write(api)
-    with open("src/dubious/discord/req.py", "w") as f:
+    with open("req.ts", "w") as f:
         f.write(req)

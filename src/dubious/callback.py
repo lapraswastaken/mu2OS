@@ -1,12 +1,12 @@
 
 import dataclasses as dc
 import inspect
+import multiprocessing as mp
 import re
 import traceback as tb
 import typing as t
-from pprint import pprint
 
-from dubious.discord import api, disc, req
+from dubious.discord import api
 
 option_types = {
     str: api.ApplicationCommandOptionType.STRING,
@@ -43,13 +43,20 @@ def prepare_option(opt: inspect.Parameter):
         typ,
         opt.name,
         desc,
-        required=opt.default == inspect._empty,
+        required=None if not opt.default == inspect._empty else True,
         choices=choices
     )
 
-ta_Callback = t.Callable[..., api.InteractionCallbackData | None]
+ta_CommandRet = api.InteractionCallbackData | None | t.Iterator[api.InteractionCallbackData | None]
 
-def do_callback(callback: ta_Callback, ixn: api.Interaction, data: api.InteractionData | api.ApplicationCommandInteractionDataOption | None):
+ps_CallbackArgs = t.ParamSpec("ps_CallbackArgs")
+t_CommandRet = t.TypeVar("t_CommandRet", bound=ta_CommandRet)
+
+def do_callback(
+    callback: t.Callable[ps_CallbackArgs, t_CommandRet],
+    ixn: api.Interaction,
+    data: api.InteractionData | api.ApplicationCommandInteractionDataOption | None
+) -> t_CommandRet:
     wants: dict[str, t.Any] = {}
     for paramname, param in inspect.signature(callback).parameters.items():
         match param.kind:
@@ -66,7 +73,15 @@ def do_callback(callback: ta_Callback, ixn: api.Interaction, data: api.Interacti
                         break
                 assert found
             case inspect.Parameter.KEYWORD_ONLY:
-                if hasattr(ixn, paramname):
+                if paramname == "ixn":
+                    wants[paramname] = ixn
+                elif paramname == "data":
+                    wants[paramname] = ixn.data
+                elif paramname == "user":
+                    if not ixn.user:
+                        assert ixn.member
+                        wants[paramname] = ixn.member.user
+                elif hasattr(ixn, paramname):
                     wants[paramname] = getattr(ixn, paramname)
                 elif hasattr(ixn.data, paramname):
                     wants[paramname] = getattr(ixn.data, paramname)
@@ -75,20 +90,47 @@ def do_callback(callback: ta_Callback, ixn: api.Interaction, data: api.Interacti
             case _:
                 raise Exception()
 
-    return callback(**wants)
+    return callback(**wants) # type: ignore
 
-ps_CallbackArgs = t.ParamSpec("ps_CallbackArgs")
-t_CallbackRet = t.TypeVar("t_CallbackRet", bound=api.InteractionCallbackData | None)
-@dc.dataclass(frozen=True)
-class Callback(api.ApplicationCommandOption, t.Generic[ps_CallbackArgs, t_CallbackRet]):
-    __func__: t.Callable[ps_CallbackArgs, t_CallbackRet]
-    _options: dict[str, api.ApplicationCommandOption] = dc.field(default_factory=dict, init=False)
-    
+
+@dc.dataclass
+class Callback(t.Generic[ps_CallbackArgs, t_CommandRet]):
+    name: str
+    __func__: t.Callable[ps_CallbackArgs, t_CommandRet]
+
+    def do(self, ixn: api.Interaction, data: api.InteractionData | api.ApplicationCommandInteractionDataOption | None) -> api.InteractionCallbackData | None:
+        done = do_callback(self.__func__, ixn, data)
+        if isinstance(done, t.Iterator):
+            initial_return = next(done)
+            mp.Process(target=list, args=(done,)).start()
+            return initial_return
+        return done
+
+@dc.dataclass
+class Group:
+    _options: dict[str, Callback] = dc.field(default_factory=dict, kw_only=True)
+
+    def __call__(self, cb: t.Callable[ps_CallbackArgs, t_CommandRet] | None = None, /, *, name: str | None=None):
+        def _(callback: t.Callable[ps_CallbackArgs, t_CommandRet]):
+            _name = name if name else callback.__name__
+            self._options[_name] = Callback(_name, callback)
+            return callback
+        if cb: return _(cb)
+        else: return _
+
+@dc.dataclass
+class Command(api.ApplicationCommandOption, Callback[ps_CallbackArgs, t_CommandRet]):
+    __func__: t.Callable[ps_CallbackArgs, t_CommandRet]
+    default_member_permissions: str | None = None
+    _options: dict[str, api.ApplicationCommandOption] = dc.field(default_factory=dict, kw_only=True)
+    guild_id: api.Snowflake | None = None
+
     @property
     def options(self):
-        return list(self._options.values())
+        return list(self._options.values()) if self._options else None
     @options.setter
-    def options(self, val: list[api.ApplicationCommandOption] | None):
+    def options(self, _: list[api.ApplicationCommandOption] | None):
+        # only needed to appease dataclass default __init__
         pass
 
     def __post_init__(self):
@@ -101,22 +143,33 @@ class Callback(api.ApplicationCommandOption, t.Generic[ps_CallbackArgs, t_Callba
                     self._options[opt.name] = prepare_option(opt)
                 except Exception as e:
                     raise ValueError(f"In command '{self.name}': {''.join(tb.format_exception(e))}")
-        if len(self.options) > 25: raise ValueError(f"There are too many options for command \"{self.name}\". Should be 25 or less; got {len(self.options)}.")
+        if len(self._options) > 25: raise ValueError(f"There are too many options for command \"{self.name}\". Should be 25 or less; got {len(self._options)}.")
+
+    def compare_with(self, registered: api.ApplicationCommand):
+        return (
+            self.guild_id == registered.guild_id and
+            self.default_member_permissions == registered.default_member_permissions and
+            self.compare_with_as_option(registered)
+        )
+    
+    def compare_with_as_option(self, registered: api.ApplicationCommand | api.ApplicationCommandOption):
+        return (
+            self.name == registered.name and
+            self.name_localizations == registered.name_localizations and
+            self.description == registered.description and
+            self.description_localizations == registered.description_localizations and
+            all(
+                this_opt.compare_with_as_option(that_opt)
+                    if isinstance(this_opt, Command) else
+                this_opt == that_opt
+                    for this_opt, that_opt in zip(self.options, registered.options)
+            ) if self.options and registered.options else self.options == registered.options
+        )
 
     def __call__(self, *args: ps_CallbackArgs.args, **kwargs: ps_CallbackArgs.kwargs):
         return self.__func__(*args, **kwargs)
 
-    def cast_to_form_as_type(self, as_type: api.ApplicationCommandType):
-        prepared_commands: list[req.CreateGlobalApplicationCommand.Form] = []
-        for command in self.options:
-            to_cast = dc.asdict(dc.replace(command, type=as_type))
-            if command.options: to_cast["options"] = [dc.asdict(option) for option in command.options]
-            prepared_commands.append(disc.cast(req.CreateGlobalApplicationCommand.Form, to_cast))
-            print(f"prepared command:")
-            pprint(prepared_commands[-1])
-        return prepared_commands
-
-    def do(self, ixn: api.Interaction, data: api.InteractionData | api.ApplicationCommandInteractionDataOption | None):
+    def do(self, ixn: api.Interaction, data: api.InteractionData | api.ApplicationCommandInteractionDataOption | None) -> api.InteractionCallbackData | None:
         if (
             isinstance(data, (api.ApplicationCommandData, api.ApplicationCommandInteractionDataOption)) and
             data.options and
@@ -124,37 +177,75 @@ class Callback(api.ApplicationCommandOption, t.Generic[ps_CallbackArgs, t_Callba
         ):
             option, = data.options
             subcommand = self._options[option.name]
-            assert isinstance(subcommand, Callback)
+            assert isinstance(subcommand, Command)
             return subcommand.do(ixn, option)
-        return do_callback(self.__func__, ixn, data)
+        return super().do(ixn, data)
 
-@dc.dataclass(frozen=True)
-class Group(Callback[[], None]):
+@dc.dataclass
+class CommandGroup(Group, Command[[], None]):
+    _options: dict[str, Command] = dc.field(default_factory=dict, kw_only=True)
+
+    def get_commands(self, *, as_type: api.ApplicationCommandType | None=None):
+        prepared_commands: dict[str, Command] = {}
+        for opt in self._options.values():
+            prepared = opt
+            if as_type:
+                # below should type error but dc.replace doesn't care
+                # api.ApplicationCommandOption.type field can't be type api.ApplicationCommandType
+                prepared = dc.replace(prepared, type=as_type)
+            if isinstance(prepared, CommandGroup):
+                prepared = dc.replace(prepared, _options=prepared.get_commands())
+            prepared_commands[opt.name] = prepared
+        return prepared_commands
 
     @classmethod
     def new(cls):
         return cls(
+            "_",
+            lambda: None,
             api.ApplicationCommandOptionType.SUB_COMMAND_GROUP,
             "_",
-            "_",
-            lambda: None
         )
 
-    def __call__(self, callback: t.Callable[ps_CallbackArgs, t_CallbackRet]) -> Callback[ps_CallbackArgs, t_CallbackRet]:
-        assert callback.__doc__
-        command = self._options[callback.__name__] = Callback(
-            api.ApplicationCommandOptionType.SUB_COMMAND,
-            callback.__name__,
-            callback.__doc__,
-            callback
-        )
-        return command
+    def __call__(self, cb: t.Callable[ps_CallbackArgs, t_CommandRet] | None=None, /, *,
+        name: str | None=None,
+        desc: str | None=None,
+        perms: list[api.Permission] | None=None,
+        guild: api.Snowflake | None=None,
+    ):
+        def _(callback: t.Callable[ps_CallbackArgs, t_CommandRet]) -> t.Callable[ps_CallbackArgs, t_CommandRet]:
+            _name = name if name else callback.__name__
+            _desc = desc if desc else callback.__doc__ if (not desc) and callback.__doc__ else "No description provided."
+            _perms = 0
+            for perm in perms if perms else []:
+                _perms |= perm
+            self._options[_name] = Command(
+                _name,
+                callback,
+                api.ApplicationCommandOptionType.SUB_COMMAND,
+                _desc.strip(),
+                str(_perms) if perms else None,
+                guild,
+            )
+            return callback
+        if cb: return _(cb)
+        else: return _
 
-    def group(self, name: str, desc: str):
+    def group(self,
+        name: str,
+        desc: str,
+        perms: t.Collection[api.Permission] | None=None,
+        guild: api.Snowflake | None=None
+    ):
+        _perms = 0
+        for perm in perms if perms else []:
+            _perms |= perm
         group = self._options[name] = self.__class__(
-            api.ApplicationCommandOptionType.SUB_COMMAND_GROUP,
             name,
+            lambda: None,
+            api.ApplicationCommandOptionType.SUB_COMMAND_GROUP,
             desc,
-            lambda: None
+            str(_perms) if perms else None,
+            guild
         )
         return group

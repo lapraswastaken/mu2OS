@@ -1,40 +1,45 @@
 
 from __future__ import annotations
 
+import dataclasses as dc
 import json
-from dataclasses import asdict, dataclass, field, fields, make_dataclass
 import os
 import re
+import typing as t
+from pprint import pprint
 from time import perf_counter
-from typing import Any, Callable, Generic, TypeVar, get_args, get_origin, get_type_hints
 
 import requests
 
 from pokeapi import api
 
-t_Getall = TypeVar("t_Getall", bound=api.HasEndpoint)
+t_Getall = t.TypeVar("t_Getall", bound=api.HasEndpoint)
+t_Any = t.TypeVar("t_Any")
 
-def cast(data: Any, typ: type):
+def cast(data: t.Any, typ: type[t_Any]) -> t_Any:
     if typ in (int, str, bool):
         return data
-    elif get_origin(typ) == list:
-        castreplacements = []
+    elif t.get_origin(typ) == list:
+        castreplacements: list[t_Any] = []
         for subobject in data if data else []:
-            castreplacements.append(cast(subobject, *get_args(typ)))
-        return castreplacements
+            castreplacements.append(cast(subobject, *t.get_args(typ)))
+        return castreplacements # type: ignore
     else:
+        if t.get_origin(typ):
+            typ = t.get_origin(typ) # type: ignore
+        assert issubclass(typ, api.APIType)
         return cast_dataclass(data, typ)
 
 def cast_dataclass(data: dict, apitype: type[api.t_API]) -> api.t_API:
     if not data: return apitype()
     
-    orig = get_origin(apitype)
+    orig = t.get_origin(apitype)
     if orig: apitype = orig
 
-    types = get_type_hints(apitype)
+    types = t.get_type_hints(apitype)
     newdata = {}
     
-    for field in fields(apitype):
+    for field in dc.fields(apitype):
         subdata = data[field.name]
         typ = types[field.name]
         newdata[field.name] = cast(subdata, typ)
@@ -58,8 +63,8 @@ def get(apitype: type[api.t_API], url: str, args: dict[str, str | int] | None=No
 #     return resources
     
 
-t_Ret = TypeVar("t_Ret")
-def _binch(call: Callable[..., t_Ret], name: str, tab: int) -> t_Ret:
+t_Ret = t.TypeVar("t_Ret")
+def _binch(call: t.Callable[..., t_Ret], name: str, tab: int) -> t_Ret:
     entab = tab * "  "
     print(f"{entab}Getting {name}... ", end="")
     tic = perf_counter()
@@ -85,29 +90,33 @@ def _binch(call: Callable[..., t_Ret], name: str, tab: int) -> t_Ret:
 #     for apitype in api.HasName.__subclasses__():
 #         _binch(lambda: get_dex(apitype), f"{apitype.__name__}.json", 0)
 
-@dataclass
-class Dex(Generic[t_Getall]):
+@dc.dataclass
+class Dex(t.Generic[t_Getall]):
 
     apitype: type[t_Getall]
-    data: dict[str, t_Getall] = field(init=False)
+    data: dict[str, t_Getall] = dc.field(init=False)
 
     def __post_init__(self):
-        with open(f"dexes/{self.apitype.__name__}.json", "r") as f:
+        with open(f"src/pokeapi/dexes/{self.apitype.__name__}.json", "r") as f:
             self.data = json.load(f)
             # for itemname in self.data:
             #     self.data[itemname] = cast_dataclass(self.data[itemname], self.apitype)
 
+    def search_by_name(self, value: str):
+        return cast(self.data.get(value), self.apitype)
+
 pattern = re.compile(r'(?<!^)(?=[A-Z])')
 
 def collect_subclasses(superclass: type[api.HasEndpoint]):
-    dexes: dict[str, type[api.HasEndpoint]] = {}
+    dexes: dict[str, Dex] = {}
     for endpointclass in superclass.__subclasses__():
         if endpointclass.__subclasses__():
             dexes = {**dexes, **collect_subclasses(endpointclass)}
         else:
-            dexes[re.sub(pattern, "_", endpointclass.__name__).lower()] = endpointclass
+            dexes[re.sub(pattern, "_", endpointclass.__name__).lower()] = Dex(endpointclass)
     return dexes
 
-Dexes: type[api.HasEndpoint] = make_dataclass("Dexes", [
-    (key, val) for key, val in collect_subclasses(api.HasEndpoint).items()
-], bases=(api.HasEndpoint,)) # type: ignore
+dexes = collect_subclasses(api.HasName)
+
+def get_dex_for(cls: type[t_Getall]) -> Dex[t_Getall]:
+    return dexes[cls.__name__.lower()]
